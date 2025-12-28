@@ -1,79 +1,175 @@
-# BWH PHP Project
+# K1 Flow
 
-## Deployment Instructions
+A web application for managing Schedule K-1 forms and tracking flow-through tax information from partnerships, S-corporations, and other pass-through entities. K1 Flow helps you calculate outside basis, track loss limitations, and manage hierarchical ownership structures.
 
-These instructions are for deploying to a cPanel-hosted Apache server with the document root set to `~/public_html`.
+## Features
+
+- **Company Management**: Track multiple K-1 issuing entities with EIN, address, and entity type
+- **K-1 Form Tracking**: Store and manage Schedule K-1 forms by tax year with all IRS fields
+- **Outside Basis Tracking**: Calculate and track your tax basis in partnership interests
+- **Loss Limitations**: Track suspended losses under Section 465 (At-Risk), Section 469 (Passive), and Section 461(l) (Excess Business Loss)
+- **Loss Carryforwards**: Manage suspended losses by type and character
+- **Ownership Hierarchy**: Model tiered ownership structures for flow-through calculations
+- **PDF Storage**: Upload and store K-1 form PDFs
+
+## Tech Stack
+
+- **Backend**: Laravel 12 (PHP 8.1+)
+- **Frontend**: React 19 with TypeScript
+- **UI Components**: shadcn/ui + Radix UI primitives
+- **Styling**: Tailwind CSS v4
+- **Build**: Vite
+- **Database**: MySQL/SQLite
+
+## Getting Started
 
 ### Prerequisites
+
 - PHP 8.1 or higher
 - Composer
 - Node.js 18+ and pnpm
-- MySQL or compatible database (if using database features)
-- SSH access to the server
+- MySQL or SQLite
 
-### Steps
+### Installation
 
-1. **Upload Project Files**
-   - Upload all project files to your server, excluding `node_modules/`, `vendor/`, and `.env` (if it contains sensitive data).
-   - Place the files in a directory outside of `public_html`, e.g., `~/laravel-app/`.
-
-2. **Install PHP Dependencies**
+1. **Clone the repository**
    ```bash
-   cd ~/laravel-app
-   composer install --no-dev --optimize-autoloader
+   git clone <repository-url>
+   cd k1flow
    ```
 
-3. **Configure Environment**
-   - Copy `.env.example` to `.env` if it exists, or create `.env` based on your local setup.
-   - Update the following in `.env`:
-     - `APP_KEY`: Generate with `php artisan key:generate`
-     - Database credentials
-     - `APP_URL`: Set to your domain
-     - Other environment-specific settings
-
-4. **Build Frontend Assets**
+2. **Install dependencies**
    ```bash
-   cd ~/laravel-app
+   composer install
+   pnpm install
+   ```
+
+3. **Configure environment**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+   
+   Update `.env` with your database credentials.
+
+4. **Run migrations**
+   ```bash
+   php artisan migrate
+   ```
+
+5. **Build assets**
+   ```bash
+   pnpm run build
+   ```
+
+### Development
+
+Run the development server:
+```bash
+# Start Laravel server and Vite dev server concurrently
+pnpm run dev
+php artisan serve
+```
+
+Or use multiple terminals:
+- Terminal 1: `php artisan serve`
+- Terminal 2: `pnpm run dev`
+
+## Database Schema
+
+### Core Tables
+
+- `k1_companies` - Partnership/S-Corp entities that issue K-1s
+- `k1_forms` - Schedule K-1 forms with all Part I, II, and III fields
+- `k1_income_sources` - Income categorization (passive, non-passive, capital, 461(l))
+- `k1_outside_basis` - Outside basis tracking per K-1
+- `k1_ob_adjustments` - CPA work product for basis adjustments
+- `k1_loss_limitations` - Form 6198/8582/461(l) calculations
+- `k1_loss_carryforwards` - Suspended losses by type and character
+- `k1_ownership` - Ownership relationships for tiered structures
+
+## API Endpoints
+
+### Companies
+- `GET /api/companies` - List all companies
+- `POST /api/companies` - Create company
+- `GET /api/companies/{id}` - Get company details
+- `PUT /api/companies/{id}` - Update company
+- `DELETE /api/companies/{id}` - Delete company
+
+### K-1 Forms
+- `GET /api/companies/{id}/forms` - List K-1 forms for company
+- `POST /api/companies/{id}/forms` - Create K-1 form
+- `GET /api/companies/{id}/forms/{formId}` - Get K-1 form details
+- `PUT /api/companies/{id}/forms/{formId}` - Update K-1 form
+- `DELETE /api/companies/{id}/forms/{formId}` - Delete K-1 form
+- `POST /api/companies/{id}/forms/{formId}/upload` - Upload K-1 PDF
+
+### Form Sub-resources
+- `/api/forms/{id}/income-sources` - Income source CRUD
+- `/api/forms/{id}/outside-basis` - Outside basis CRUD
+- `/api/forms/{id}/outside-basis/adjustments` - OB adjustments CRUD
+- `/api/forms/{id}/loss-limitations` - Loss limitations CRUD
+- `/api/forms/{id}/loss-carryforwards` - Loss carryforwards CRUD
+
+### Ownership
+- `GET /api/ownership` - List all ownership relationships
+- `POST /api/ownership` - Create ownership relationship
+- `PUT /api/ownership/{id}` - Update ownership
+- `DELETE /api/ownership/{id}` - Delete ownership
+- `GET /api/companies/{id}/owners` - Get owners of a company
+- `GET /api/companies/{id}/owned` - Get companies owned by a company
+
+## IRS References
+
+This application tracks data from:
+- **Schedule K-1 (Form 1065)** - Partner's Share of Income, Deductions, Credits, etc.
+- **Form 6198** - At-Risk Limitations
+- **Form 8582** - Passive Activity Loss Limitations
+- **Section 461(l)** - Excess Business Loss Limitation
+
+## Deployment
+
+See [Deployment Instructions](#deployment-instructions) below for deploying to a cPanel-hosted Apache server.
+
+### Deployment Instructions
+
+1. **Upload Project Files**
+   - Upload all project files to your server, excluding `node_modules/`, `vendor/`, and `.env`
+   - Place files in a directory outside of `public_html`, e.g., `~/k1flow/`
+
+2. **Install Dependencies**
+   ```bash
+   cd ~/k1flow
+   composer install --no-dev --optimize-autoloader
    pnpm install
    pnpm run build
    ```
 
-5. **Set Up Public Directory**
-   - Copy the contents of `~/laravel-app/public/` to `~/public_html/`.
-   - Ensure `~/public_html/index.php` points to the correct Laravel application path.
-   - Update `~/public_html/index.php` if necessary to reflect the new path:
-     ```php
-     require __DIR__.'/../laravel-app/vendor/autoload.php';
-     $app = require_once __DIR__.'/../laravel-app/bootstrap/app.php';
-     ```
+3. **Configure Environment**
+   - Create `.env` and configure database, `APP_KEY`, and `APP_URL`
 
-6. **Database Setup** (if applicable)
+4. **Set Up Public Directory**
+   - Copy `~/k1flow/public/` contents to `~/public_html/`
+   - Update `index.php` paths as needed
+
+5. **Database Setup**
    ```bash
-   cd ~/laravel-app
    php artisan migrate --force
-   php artisan db:seed  # if you have seeders
    ```
 
-7. **Set Permissions**
+6. **Set Permissions**
    ```bash
-   cd ~/laravel-app
-   chown -R youruser:youruser storage bootstrap/cache
    chmod -R 775 storage bootstrap/cache
    ```
 
-8. **Clear and Cache Configuration**
+7. **Cache Configuration**
    ```bash
-   cd ~/laravel-app
    php artisan config:cache
    php artisan route:cache
    php artisan view:cache
    ```
 
-9. **Test the Deployment**
-   - Visit your domain to ensure the site loads correctly.
-   - Check for any 500 errors and review logs in `storage/logs/`.
+## License
 
-### Additional Notes
-- If you need to update the application, repeat steps 1-8, or use a deployment script.
-- For zero-downtime deployments, consider using a staging directory and switching symlinks.
-- Ensure your server meets Laravel's requirements: https://laravel.com/docs/requirements
+Private - All rights reserved
