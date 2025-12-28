@@ -2,11 +2,14 @@
 
 namespace App\Models\K1;
 
+use App\Traits\SerializesDatesAsLocal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class K1Ownership extends Model
 {
+    use SerializesDatesAsLocal;
+
     protected $table = 'k1_ownership';
 
     protected $fillable = [

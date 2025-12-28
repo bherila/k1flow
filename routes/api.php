@@ -26,6 +26,7 @@ Route::prefix('companies/{company}')->group(function () {
     Route::put('forms/{form}', [K1FormController::class, 'update']);
     Route::delete('forms/{form}', [K1FormController::class, 'destroy']);
     Route::post('forms/{form}/upload', [K1FormController::class, 'uploadForm']);
+    Route::post('forms/{form}/extract-pdf', [K1FormController::class, 'extractFromPdf']);
 });
 
 // K-1 Form sub-resources (using form ID directly for cleaner URLs)

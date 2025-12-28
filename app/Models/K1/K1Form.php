@@ -2,6 +2,7 @@
 
 namespace App\Models\K1;
 
+use App\Traits\SerializesDatesAsLocal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class K1Form extends Model
 {
+    use SerializesDatesAsLocal;
+
     protected $table = 'k1_forms';
 
     protected $fillable = [

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { K1Form, K1Company } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';
@@ -10,7 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, ChevronRight, Save, Upload } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ChevronLeft, ChevronRight, Save, Upload, FileUp, Loader2 } from 'lucide-react';
 
 interface Props {
   companyId: number;
@@ -22,7 +23,17 @@ export default function K1FormDetail({ companyId, formId }: Props) {
   const [form, setForm] = useState<K1Form | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState<Partial<K1Form>>({});
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  
+  // Use refs for form data to avoid re-rendering on every keystroke
+  const formDataRef = useRef<Partial<K1Form>>({});
+  const pendingChangesRef = useRef<Set<keyof K1Form>>(new Set());
+  
+  // PDF upload state
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadData();
@@ -30,13 +41,13 @@ export default function K1FormDetail({ companyId, formId }: Props) {
 
   const loadData = async () => {
     try {
-      const [companyData, formData] = await Promise.all([
+      const [companyData, formDataResult] = await Promise.all([
         fetchWrapper.get(`/api/companies/${companyId}`),
         fetchWrapper.get(`/api/companies/${companyId}/forms/${formId}`),
       ]);
       setCompany(companyData);
-      setForm(formData);
-      setFormData(formData);
+      setForm(formDataResult);
+      formDataRef.current = { ...formDataResult };
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -44,20 +55,99 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     }
   };
 
-  const handleChange = (field: keyof K1Form, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = async () => {
+  // Auto-save on blur - only saves changed fields
+  const saveField = useCallback(async (field: keyof K1Form) => {
+    if (!pendingChangesRef.current.has(field)) return;
+    
+    setSaveStatus('saving');
     setSaving(true);
     try {
-      const updated = await fetchWrapper.put(`/api/companies/${companyId}/forms/${formId}`, formData);
+      const payload = { [field]: formDataRef.current[field] };
+      const updated = await fetchWrapper.put(`/api/companies/${companyId}/forms/${formId}`, payload);
       setForm(updated);
-      setFormData(updated);
+      formDataRef.current = { ...updated };
+      pendingChangesRef.current.delete(field);
+      setSaveStatus('saved');
+      // Clear saved status after 2 seconds
+      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Failed to save:', error);
+      setSaveStatus('error');
     } finally {
       setSaving(false);
+    }
+  }, [companyId, formId]);
+
+  // Handle field change - stores in ref without re-render
+  const handleChange = useCallback((field: keyof K1Form, value: any) => {
+    formDataRef.current = { ...formDataRef.current, [field]: value };
+    pendingChangesRef.current.add(field);
+  }, []);
+
+  // Full save for manual trigger
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveStatus('saving');
+    try {
+      const updated = await fetchWrapper.put(`/api/companies/${companyId}/forms/${formId}`, formDataRef.current);
+      setForm(updated);
+      formDataRef.current = { ...updated };
+      pendingChangesRef.current.clear();
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Failed to save:', error);
+      setSaveStatus('error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // PDF upload handler
+  const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadProgress('Uploading PDF...');
+
+    try {
+      const formData = new FormData();
+      formData.append('pdf', file);
+
+      setUploadProgress('Processing with Gemini AI... This may take a moment.');
+      
+      const result = await fetchWrapper.post(
+        `/api/companies/${companyId}/forms/${formId}/extract-pdf`,
+        formData
+      );
+
+      if (result.extracted_data) {
+        // Merge extracted data with current form
+        formDataRef.current = { ...formDataRef.current, ...result.extracted_data };
+        setForm(prev => prev ? { ...prev, ...result.extracted_data } : prev);
+        setUploadProgress('Data extracted successfully! Review and save.');
+        
+        // Mark all extracted fields as pending
+        Object.keys(result.extracted_data).forEach(key => {
+          pendingChangesRef.current.add(key as keyof K1Form);
+        });
+      }
+
+      // Close modal after success
+      setTimeout(() => {
+        setUploadModalOpen(false);
+        setUploadProgress('');
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to upload/extract PDF:', error);
+      setUploadProgress('Failed to extract data. Please try again.');
+    } finally {
+      setUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -88,8 +178,9 @@ export default function K1FormDetail({ companyId, formId }: Props) {
         id={field}
         type="number"
         step="0.01"
-        value={formData[field] ?? ''}
+        defaultValue={(form[field] as string | number | undefined) ?? ''}
         onChange={(e) => handleChange(field, e.target.value || null)}
+        onBlur={() => saveField(field)}
         className="font-mono"
       />
       {description && <p className="text-xs text-muted-foreground">{description}</p>}
@@ -105,8 +196,9 @@ export default function K1FormDetail({ companyId, formId }: Props) {
         step="0.0001"
         min="0"
         max="100"
-        value={formData[field] ?? ''}
+        defaultValue={(form[field] as string | number | undefined) ?? ''}
         onChange={(e) => handleChange(field, e.target.value || null)}
+        onBlur={() => saveField(field)}
         className="font-mono"
       />
     </div>
@@ -117,8 +209,9 @@ export default function K1FormDetail({ companyId, formId }: Props) {
       <Label htmlFor={field}>{label}</Label>
       <Input
         id={field}
-        value={(formData[field] as string) ?? ''}
+        defaultValue={(form[field] as string) ?? ''}
         onChange={(e) => handleChange(field, e.target.value || null)}
+        onBlur={() => saveField(field)}
         placeholder={placeholder}
       />
     </div>
@@ -128,8 +221,11 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     <div className="flex items-center space-x-2">
       <Checkbox
         id={field}
-        checked={!!formData[field]}
-        onCheckedChange={(checked) => handleChange(field, checked)}
+        defaultChecked={!!form[field]}
+        onCheckedChange={(checked) => {
+          handleChange(field, checked);
+          saveField(field);
+        }}
       />
       <Label htmlFor={field} className="text-sm font-normal">{label}</Label>
     </div>
@@ -155,12 +251,72 @@ export default function K1FormDetail({ companyId, formId }: Props) {
           <p className="text-muted-foreground mt-1">
             Partner's Share of Income, Deductions, Credits, etc.
           </p>
+          {/* Auto-save status indicator */}
+          {saveStatus === 'saving' && (
+            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+              <Loader2 className="h-3 w-3 animate-spin" /> Saving...
+            </p>
+          )}
+          {saveStatus === 'saved' && (
+            <p className="text-sm text-green-600 dark:text-green-400 mt-1">✓ Saved</p>
+          )}
+          {saveStatus === 'error' && (
+            <p className="text-sm text-red-600 dark:text-red-400 mt-1">Failed to save</p>
+          )}
         </div>
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="mr-2 h-4 w-4" />
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setUploadModalOpen(true)}>
+            <FileUp className="mr-2 h-4 w-4" />
+            Import K-1 PDF
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            <Save className="mr-2 h-4 w-4" />
+            {saving ? 'Saving...' : 'Save All'}
+          </Button>
+        </div>
       </div>
+
+      {/* PDF Upload Modal */}
+      <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import K-1 from PDF</DialogTitle>
+            <DialogDescription>
+              Upload a Schedule K-1 PDF document. Gemini AI will extract the data and populate the form fields.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {uploading ? (
+              <div className="flex flex-col items-center py-8">
+                <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+                <p className="mt-4 text-sm text-muted-foreground">{uploadProgress}</p>
+              </div>
+            ) : (
+              <>
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                  <FileUp className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Click to select a PDF file
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handlePdfUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    style={{ position: 'relative' }}
+                  />
+                </div>
+                {uploadProgress && (
+                  <p className={`text-sm text-center ${uploadProgress.includes('Failed') ? 'text-red-600' : 'text-green-600'}`}>
+                    {uploadProgress}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Tabs for different K-1 sections */}
       <Tabs defaultValue="partnership" className="space-y-4">
@@ -191,8 +347,9 @@ export default function K1FormDetail({ companyId, formId }: Props) {
                   <Input
                     id="partnership_tax_year_begin"
                     type="date"
-                    value={(formData.partnership_tax_year_begin as string)?.split('T')[0] ?? ''}
+                    defaultValue={(form.partnership_tax_year_begin as string)?.split('T')[0] ?? ''}
                     onChange={(e) => handleChange('partnership_tax_year_begin', e.target.value || null)}
+                    onBlur={() => saveField('partnership_tax_year_begin')}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -200,8 +357,9 @@ export default function K1FormDetail({ companyId, formId }: Props) {
                   <Input
                     id="partnership_tax_year_end"
                     type="date"
-                    value={(formData.partnership_tax_year_end as string)?.split('T')[0] ?? ''}
+                    defaultValue={(form.partnership_tax_year_end as string)?.split('T')[0] ?? ''}
                     onChange={(e) => handleChange('partnership_tax_year_end', e.target.value || null)}
+                    onBlur={() => saveField('partnership_tax_year_end')}
                   />
                 </div>
                 <TextInput label="IRS Center (Box B)" field="irs_center" />
@@ -315,7 +473,7 @@ export default function K1FormDetail({ companyId, formId }: Props) {
                     <CheckboxInput label="Section 704(b)" field="capital_account_section_704b" />
                     <CheckboxInput label="Other" field="capital_account_other" />
                   </div>
-                  {formData.capital_account_other && (
+                  {form.capital_account_other && (
                     <TextInput label="Other Method Description" field="capital_account_other_description" />
                   )}
                 </div>
@@ -365,8 +523,9 @@ export default function K1FormDetail({ companyId, formId }: Props) {
                   <Label htmlFor="box_11_other_income">Box 11 - Other Income (Loss)</Label>
                   <Textarea
                     id="box_11_other_income"
-                    value={(formData.box_11_other_income as string) ?? ''}
+                    defaultValue={(form.box_11_other_income as string) ?? ''}
                     onChange={(e) => handleChange('box_11_other_income', e.target.value || null)}
+                    onBlur={() => saveField('box_11_other_income')}
                     placeholder="e.g., Code A: $1,000, Code B: $500"
                   />
                 </div>
@@ -374,16 +533,18 @@ export default function K1FormDetail({ companyId, formId }: Props) {
                   <Label htmlFor="box_13_other_deductions">Box 13 - Other Deductions</Label>
                   <Textarea
                     id="box_13_other_deductions"
-                    value={(formData.box_13_other_deductions as string) ?? ''}
+                    defaultValue={(form.box_13_other_deductions as string) ?? ''}
                     onChange={(e) => handleChange('box_13_other_deductions', e.target.value || null)}
+                    onBlur={() => saveField('box_13_other_deductions')}
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="box_20_other_info">Box 20 - Other Information</Label>
                   <Textarea
                     id="box_20_other_info"
-                    value={(formData.box_20_other_info as string) ?? ''}
+                    defaultValue={(form.box_20_other_info as string) ?? ''}
                     onChange={(e) => handleChange('box_20_other_info', e.target.value || null)}
+                    onBlur={() => saveField('box_20_other_info')}
                     placeholder="Code Z, AH, etc."
                   />
                 </div>
@@ -442,8 +603,9 @@ export default function K1FormDetail({ companyId, formId }: Props) {
         </CardHeader>
         <CardContent>
           <Textarea
-            value={(formData.notes as string) ?? ''}
+            defaultValue={(form.notes as string) ?? ''}
             onChange={(e) => handleChange('notes', e.target.value || null)}
+            onBlur={() => saveField('notes')}
             placeholder="Add any notes about this K-1 form..."
             rows={4}
           />

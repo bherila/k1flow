@@ -16,3 +16,13 @@ Route::get('/company/{id}', function ($id) {
 Route::get('/company/{companyId}/k1/{formId}', function ($companyId, $formId) {
     return view('k1-form', ['companyId' => $companyId, 'formId' => $formId]);
 });
+
+// Outside Basis tracking view
+Route::get('/company/{companyId}/k1/{formId}/basis', function ($companyId, $formId) {
+    return view('k1-outside-basis', ['companyId' => $companyId, 'formId' => $formId]);
+});
+
+// Loss Limitations tracking view
+Route::get('/company/{companyId}/k1/{formId}/losses', function ($companyId, $formId) {
+    return view('k1-loss-limitations', ['companyId' => $companyId, 'formId' => $formId]);
+});
