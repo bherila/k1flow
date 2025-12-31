@@ -242,25 +242,6 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
     );
   }
 
-  const MoneyInput = ({ label, value, onChange, onBlur }: { 
-    label: string; 
-    value: string | null | undefined; 
-    onChange: (value: string) => void;
-    onBlur: () => void;
-  }) => (
-    <div className="grid gap-2">
-      <Label>{label}</Label>
-      <Input
-        type="number"
-        step="0.01"
-        defaultValue={value ?? ''}
-        onChange={(e) => onChange(e.target.value || '')}
-        onBlur={onBlur}
-        className="font-mono"
-      />
-    </div>
-  );
-
   const increases = outsideBasis?.adjustments?.filter(a => a.adjustment_category === 'increase') || [];
   const decreases = outsideBasis?.adjustments?.filter(a => a.adjustment_category === 'decrease') || [];
 
@@ -678,3 +659,27 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
     </div>
   );
 }
+
+const MoneyInput = ({ 
+  label, 
+  value, 
+  onChange, 
+  onBlur 
+}: { 
+  label: string; 
+  value: string | null | undefined; 
+  onChange: (value: string) => void;
+  onBlur: () => void;
+}) => (
+  <div className="grid gap-2">
+    <Label>{label}</Label>
+    <Input
+      type="number"
+      step="0.01"
+      defaultValue={value ?? ''}
+      onChange={(e) => onChange(e.target.value || '')}
+      onBlur={onBlur}
+      className="font-mono"
+    />
+  </div>
+);

@@ -172,66 +172,6 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     );
   }
 
-  const MoneyInput = ({ label, field, description }: { label: string; field: keyof K1Form; description?: string }) => (
-    <div className="grid gap-2">
-      <Label htmlFor={field}>{label}</Label>
-      <Input
-        id={field}
-        type="number"
-        step="0.01"
-        defaultValue={(form[field] as string | number | undefined) ?? ''}
-        onChange={(e) => handleChange(field, e.target.value || null)}
-        onBlur={() => saveField(field)}
-        className="font-mono"
-      />
-      {description && <p className="text-xs text-muted-foreground">{description}</p>}
-    </div>
-  );
-
-  const PercentInput = ({ label, field }: { label: string; field: keyof K1Form }) => (
-    <div className="grid gap-2">
-      <Label htmlFor={field}>{label}</Label>
-      <Input
-        id={field}
-        type="number"
-        step="0.0001"
-        min="0"
-        max="100"
-        defaultValue={(form[field] as string | number | undefined) ?? ''}
-        onChange={(e) => handleChange(field, e.target.value || null)}
-        onBlur={() => saveField(field)}
-        className="font-mono"
-      />
-    </div>
-  );
-
-  const TextInput = ({ label, field, placeholder }: { label: string; field: keyof K1Form; placeholder?: string }) => (
-    <div className="grid gap-2">
-      <Label htmlFor={field}>{label}</Label>
-      <Input
-        id={field}
-        defaultValue={(form[field] as string) ?? ''}
-        onChange={(e) => handleChange(field, e.target.value || null)}
-        onBlur={() => saveField(field)}
-        placeholder={placeholder}
-      />
-    </div>
-  );
-
-  const CheckboxInput = ({ label, field }: { label: string; field: keyof K1Form }) => (
-    <div className="flex items-center space-x-2">
-      <Checkbox
-        id={field}
-        defaultChecked={!!form[field]}
-        onCheckedChange={(checked) => {
-          handleChange(field, checked);
-          saveField(field);
-        }}
-      />
-      <Label htmlFor={field} className="text-sm font-normal">{label}</Label>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -336,10 +276,29 @@ export default function K1FormDetail({ companyId, formId }: Props) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <TextInput label="Partnership Name (Box A)" field="partnership_name" />
-                <TextInput label="Partnership EIN" field="partnership_ein" placeholder="XX-XXXXXXX" />
+                <TextInput 
+                  label="Partnership Name (Box A)" 
+                  field="partnership_name" 
+                  value={form.partnership_name} 
+                  onChange={handleChange} 
+                  onSave={saveField} 
+                />
+                <TextInput 
+                  label="Partnership EIN" 
+                  field="partnership_ein" 
+                  placeholder="XX-XXXXXXX" 
+                  value={form.partnership_ein} 
+                  onChange={handleChange} 
+                  onSave={saveField} 
+                />
               </div>
-              <TextInput label="Partnership Address" field="partnership_address" />
+              <TextInput 
+                label="Partnership Address" 
+                field="partnership_address" 
+                value={form.partnership_address} 
+                onChange={handleChange} 
+                onSave={saveField} 
+              />
               <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="partnership_tax_year_begin">Tax Year Begin</Label>
@@ -361,9 +320,21 @@ export default function K1FormDetail({ companyId, formId }: Props) {
                     onBlur={() => saveField('partnership_tax_year_end')}
                   />
                 </div>
-                <TextInput label="IRS Center (Box B)" field="irs_center" />
+                <TextInput 
+                  label="IRS Center (Box B)" 
+                  field="irs_center" 
+                  value={form.irs_center} 
+                  onChange={handleChange} 
+                  onSave={saveField} 
+                />
               </div>
-              <CheckboxInput label="Publicly Traded Partnership (Box C)" field="is_publicly_traded" />
+              <CheckboxInput 
+                label="Publicly Traded Partnership (Box C)" 
+                field="is_publicly_traded" 
+                value={form.is_publicly_traded} 
+                onChange={handleChange} 
+                onSave={saveField} 
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -378,31 +349,91 @@ export default function K1FormDetail({ companyId, formId }: Props) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <TextInput label="Partner Name (Box E)" field="partner_name" />
-                  <TextInput label="Partner SSN/EIN (Box D)" field="partner_ssn_ein" />
+                  <TextInput 
+                    label="Partner Name (Box E)" 
+                    field="partner_name" 
+                    value={form.partner_name} 
+                    onChange={handleChange} 
+                    onSave={saveField} 
+                  />
+                  <TextInput 
+                    label="Partner SSN/EIN (Box D)" 
+                    field="partner_ssn_ein" 
+                    value={form.partner_ssn_ein} 
+                    onChange={handleChange} 
+                    onSave={saveField} 
+                  />
                 </div>
-                <TextInput label="Partner Address" field="partner_address" />
+                <TextInput 
+                  label="Partner Address" 
+                  field="partner_address" 
+                  value={form.partner_address} 
+                  onChange={handleChange} 
+                  onSave={saveField} 
+                />
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Partner Type (Box F)</Label>
                     <div className="space-y-2">
-                      <CheckboxInput label="General Partner" field="is_general_partner" />
-                      <CheckboxInput label="Limited Partner" field="is_limited_partner" />
+                      <CheckboxInput 
+                        label="General Partner" 
+                        field="is_general_partner" 
+                        value={form.is_general_partner} 
+                        onChange={handleChange} 
+                        onSave={saveField} 
+                      />
+                      <CheckboxInput 
+                        label="Limited Partner" 
+                        field="is_limited_partner" 
+                        value={form.is_limited_partner} 
+                        onChange={handleChange} 
+                        onSave={saveField} 
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Domestic/Foreign (Box G)</Label>
                     <div className="space-y-2">
-                      <CheckboxInput label="Domestic Partner" field="is_domestic_partner" />
-                      <CheckboxInput label="Foreign Partner" field="is_foreign_partner" />
+                      <CheckboxInput 
+                        label="Domestic Partner" 
+                        field="is_domestic_partner" 
+                        value={form.is_domestic_partner} 
+                        onChange={handleChange} 
+                        onSave={saveField} 
+                      />
+                      <CheckboxInput 
+                        label="Foreign Partner" 
+                        field="is_foreign_partner" 
+                        value={form.is_foreign_partner} 
+                        onChange={handleChange} 
+                        onSave={saveField} 
+                      />
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <TextInput label="Entity Type Code (Box I1)" field="entity_type_code" />
+                  <TextInput 
+                    label="Entity Type Code (Box I1)" 
+                    field="entity_type_code" 
+                    value={form.entity_type_code} 
+                    onChange={handleChange} 
+                    onSave={saveField} 
+                  />
                   <div className="col-span-2 space-y-2">
-                    <CheckboxInput label="Disregarded Entity (Box H)" field="is_disregarded_entity" />
-                    <CheckboxInput label="IRA/Retirement Plan (Box I2)" field="is_retirement_plan" />
+                    <CheckboxInput 
+                      label="Disregarded Entity (Box H)" 
+                      field="is_disregarded_entity" 
+                      value={form.is_disregarded_entity} 
+                      onChange={handleChange} 
+                      onSave={saveField} 
+                    />
+                    <CheckboxInput 
+                      label="IRA/Retirement Plan (Box I2)" 
+                      field="is_retirement_plan" 
+                      value={form.is_retirement_plan} 
+                      onChange={handleChange} 
+                      onSave={saveField} 
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -421,18 +452,18 @@ export default function K1FormDetail({ companyId, formId }: Props) {
                 </div>
                 <div className="grid grid-cols-3 gap-4 mt-2">
                   <Label className="self-center">Profit</Label>
-                  <PercentInput label="" field="share_of_profit_beginning" />
-                  <PercentInput label="" field="share_of_profit_ending" />
+                  <PercentInput label="" field="share_of_profit_beginning" value={form.share_of_profit_beginning} onChange={handleChange} onSave={saveField} />
+                  <PercentInput label="" field="share_of_profit_ending" value={form.share_of_profit_ending} onChange={handleChange} onSave={saveField} />
                 </div>
                 <div className="grid grid-cols-3 gap-4 mt-2">
                   <Label className="self-center">Loss</Label>
-                  <PercentInput label="" field="share_of_loss_beginning" />
-                  <PercentInput label="" field="share_of_loss_ending" />
+                  <PercentInput label="" field="share_of_loss_beginning" value={form.share_of_loss_beginning} onChange={handleChange} onSave={saveField} />
+                  <PercentInput label="" field="share_of_loss_ending" value={form.share_of_loss_ending} onChange={handleChange} onSave={saveField} />
                 </div>
                 <div className="grid grid-cols-3 gap-4 mt-2">
                   <Label className="self-center">Capital</Label>
-                  <PercentInput label="" field="share_of_capital_beginning" />
-                  <PercentInput label="" field="share_of_capital_ending" />
+                  <PercentInput label="" field="share_of_capital_beginning" value={form.share_of_capital_beginning} onChange={handleChange} onSave={saveField} />
+                  <PercentInput label="" field="share_of_capital_ending" value={form.share_of_capital_ending} onChange={handleChange} onSave={saveField} />
                 </div>
               </CardContent>
             </Card>
@@ -443,10 +474,10 @@ export default function K1FormDetail({ companyId, formId }: Props) {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  <MoneyInput label="Nonrecourse" field="nonrecourse_liabilities" />
-                  <MoneyInput label="Qualified Nonrecourse Financing" field="qualified_nonrecourse_financing" />
-                  <MoneyInput label="Recourse" field="recourse_liabilities" />
-                  <MoneyInput label="Total Liabilities" field="total_liabilities" />
+                  <MoneyInput label="Nonrecourse" field="nonrecourse_liabilities" value={form.nonrecourse_liabilities} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Qualified Nonrecourse Financing" field="qualified_nonrecourse_financing" value={form.qualified_nonrecourse_financing} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Recourse" field="recourse_liabilities" value={form.recourse_liabilities} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Total Liabilities" field="total_liabilities" value={form.total_liabilities} onChange={handleChange} onSave={saveField} />
                 </div>
               </CardContent>
             </Card>
@@ -457,23 +488,23 @@ export default function K1FormDetail({ companyId, formId }: Props) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <MoneyInput label="Beginning Capital Account" field="beginning_capital_account" />
-                  <MoneyInput label="Capital Contributed" field="capital_contributed" />
-                  <MoneyInput label="Current Year Income (Loss)" field="current_year_income_loss" />
-                  <MoneyInput label="Withdrawals & Distributions" field="withdrawals_distributions" />
-                  <MoneyInput label="Other Increase (Decrease)" field="other_increase_decrease" />
-                  <MoneyInput label="Ending Capital Account" field="ending_capital_account" />
+                  <MoneyInput label="Beginning Capital Account" field="beginning_capital_account" value={form.beginning_capital_account} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Capital Contributed" field="capital_contributed" value={form.capital_contributed} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Current Year Income (Loss)" field="current_year_income_loss" value={form.current_year_income_loss} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Withdrawals & Distributions" field="withdrawals_distributions" value={form.withdrawals_distributions} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Other Increase (Decrease)" field="other_increase_decrease" value={form.other_increase_decrease} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Ending Capital Account" field="ending_capital_account" value={form.ending_capital_account} onChange={handleChange} onSave={saveField} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Capital Account Method</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    <CheckboxInput label="Tax Basis" field="capital_account_tax_basis" />
-                    <CheckboxInput label="GAAP" field="capital_account_gaap" />
-                    <CheckboxInput label="Section 704(b)" field="capital_account_section_704b" />
-                    <CheckboxInput label="Other" field="capital_account_other" />
+                    <CheckboxInput label="Tax Basis" field="capital_account_tax_basis" value={form.capital_account_tax_basis} onChange={handleChange} onSave={saveField} />
+                    <CheckboxInput label="GAAP" field="capital_account_gaap" value={form.capital_account_gaap} onChange={handleChange} onSave={saveField} />
+                    <CheckboxInput label="Section 704(b)" field="capital_account_section_704b" value={form.capital_account_section_704b} onChange={handleChange} onSave={saveField} />
+                    <CheckboxInput label="Other" field="capital_account_other" value={form.capital_account_other} onChange={handleChange} onSave={saveField} />
                   </div>
                   {form.capital_account_other && (
-                    <TextInput label="Other Method Description" field="capital_account_other_description" />
+                    <TextInput label="Other Method Description" field="capital_account_other_description" value={form.capital_account_other_description} onChange={handleChange} onSave={saveField} />
                   )}
                 </div>
               </CardContent>
@@ -490,24 +521,24 @@ export default function K1FormDetail({ companyId, formId }: Props) {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  <MoneyInput label="Box 1 - Ordinary Business Income (Loss)" field="box_1_ordinary_income" />
-                  <MoneyInput label="Box 2 - Net Rental Real Estate Income (Loss)" field="box_2_net_rental_real_estate" />
-                  <MoneyInput label="Box 3 - Other Net Rental Income (Loss)" field="box_3_other_net_rental" />
-                  <MoneyInput label="Box 4a - Guaranteed Payments (Services)" field="box_4a_guaranteed_payments_services" />
-                  <MoneyInput label="Box 4b - Guaranteed Payments (Capital)" field="box_4b_guaranteed_payments_capital" />
-                  <MoneyInput label="Box 4c - Guaranteed Payments (Total)" field="box_4c_guaranteed_payments_total" />
-                  <MoneyInput label="Box 5 - Interest Income" field="box_5_interest_income" />
-                  <MoneyInput label="Box 6a - Ordinary Dividends" field="box_6a_ordinary_dividends" />
-                  <MoneyInput label="Box 6b - Qualified Dividends" field="box_6b_qualified_dividends" />
-                  <MoneyInput label="Box 6c - Dividend Equivalents" field="box_6c_dividend_equivalents" />
-                  <MoneyInput label="Box 7 - Royalties" field="box_7_royalties" />
-                  <MoneyInput label="Box 8 - Net Short-Term Capital Gain (Loss)" field="box_8_net_short_term_capital_gain" />
-                  <MoneyInput label="Box 9a - Net Long-Term Capital Gain (Loss)" field="box_9a_net_long_term_capital_gain" />
-                  <MoneyInput label="Box 9b - Collectibles (28%) Gain (Loss)" field="box_9b_collectibles_gain" />
-                  <MoneyInput label="Box 9c - Unrecaptured Section 1250 Gain" field="box_9c_unrecaptured_1250_gain" />
-                  <MoneyInput label="Box 10 - Net Section 1231 Gain (Loss)" field="box_10_net_section_1231_gain" />
-                  <MoneyInput label="Box 12 - Section 179 Deduction" field="box_12_section_179_deduction" />
-                  <MoneyInput label="Box 14 - Self-Employment Earnings" field="box_14_self_employment_earnings" />
+                  <MoneyInput label="Box 1 - Ordinary Business Income (Loss)" field="box_1_ordinary_income" value={form.box_1_ordinary_income} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 2 - Net Rental Real Estate Income (Loss)" field="box_2_net_rental_real_estate" value={form.box_2_net_rental_real_estate} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 3 - Other Net Rental Income (Loss)" field="box_3_other_net_rental" value={form.box_3_other_net_rental} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 4a - Guaranteed Payments (Services)" field="box_4a_guaranteed_payments_services" value={form.box_4a_guaranteed_payments_services} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 4b - Guaranteed Payments (Capital)" field="box_4b_guaranteed_payments_capital" value={form.box_4b_guaranteed_payments_capital} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 4c - Guaranteed Payments (Total)" field="box_4c_guaranteed_payments_total" value={form.box_4c_guaranteed_payments_total} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 5 - Interest Income" field="box_5_interest_income" value={form.box_5_interest_income} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 6a - Ordinary Dividends" field="box_6a_ordinary_dividends" value={form.box_6a_ordinary_dividends} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 6b - Qualified Dividends" field="box_6b_qualified_dividends" value={form.box_6b_qualified_dividends} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 6c - Dividend Equivalents" field="box_6c_dividend_equivalents" value={form.box_6c_dividend_equivalents} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 7 - Royalties" field="box_7_royalties" value={form.box_7_royalties} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 8 - Net Short-Term Capital Gain (Loss)" field="box_8_net_short_term_capital_gain" value={form.box_8_net_short_term_capital_gain} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 9a - Net Long-Term Capital Gain (Loss)" field="box_9a_net_long_term_capital_gain" value={form.box_9a_net_long_term_capital_gain} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 9b - Collectibles (28%) Gain (Loss)" field="box_9b_collectibles_gain" value={form.box_9b_collectibles_gain} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 9c - Unrecaptured Section 1250 Gain" field="box_9c_unrecaptured_1250_gain" value={form.box_9c_unrecaptured_1250_gain} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 10 - Net Section 1231 Gain (Loss)" field="box_10_net_section_1231_gain" value={form.box_10_net_section_1231_gain} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 12 - Section 179 Deduction" field="box_12_section_179_deduction" value={form.box_12_section_179_deduction} onChange={handleChange} onSave={saveField} />
+                  <MoneyInput label="Box 14 - Self-Employment Earnings" field="box_14_self_employment_earnings" value={form.box_14_self_employment_earnings} onChange={handleChange} onSave={saveField} />
                 </div>
               </CardContent>
             </Card>
@@ -571,3 +602,116 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     </div>
   );
 }
+
+const MoneyInput = ({ 
+  label, 
+  field, 
+  value,
+  onChange,
+  onSave,
+  description 
+}: { 
+  label: string; 
+  field: keyof K1Form; 
+  value: any;
+  onChange: (field: keyof K1Form, value: any) => void;
+  onSave: (field: keyof K1Form) => void;
+  description?: string 
+}) => (
+  <div className="grid gap-2">
+    <Label htmlFor={field}>{label}</Label>
+    <Input
+      id={field}
+      type="number"
+      step="0.01"
+      defaultValue={(value as string | number | undefined) ?? ''}
+      onChange={(e) => onChange(field, e.target.value || null)}
+      onBlur={() => onSave(field)}
+      className="font-mono"
+    />
+    {description && <p className="text-xs text-muted-foreground">{description}</p>}
+  </div>
+);
+
+const PercentInput = ({ 
+  label, 
+  field,
+  value,
+  onChange,
+  onSave 
+}: { 
+  label: string; 
+  field: keyof K1Form; 
+  value: any;
+  onChange: (field: keyof K1Form, value: any) => void;
+  onSave: (field: keyof K1Form) => void;
+}) => (
+  <div className="grid gap-2">
+    <Label htmlFor={field}>{label}</Label>
+    <Input
+      id={field}
+      type="number"
+      step="0.0001"
+      min="0"
+      max="100"
+      defaultValue={(value as string | number | undefined) ?? ''}
+      onChange={(e) => onChange(field, e.target.value || null)}
+      onBlur={() => onSave(field)}
+      className="font-mono"
+    />
+  </div>
+);
+
+const TextInput = ({ 
+  label, 
+  field, 
+  placeholder,
+  value,
+  onChange,
+  onSave
+}: { 
+  label: string; 
+  field: keyof K1Form; 
+  placeholder?: string;
+  value: any;
+  onChange: (field: keyof K1Form, value: any) => void;
+  onSave: (field: keyof K1Form) => void;
+}) => (
+  <div className="grid gap-2">
+    <Label htmlFor={field}>{label}</Label>
+    <Input
+      id={field}
+      defaultValue={(value as string) ?? ''}
+      onChange={(e) => onChange(field, e.target.value || null)}
+      onBlur={() => onSave(field)}
+      placeholder={placeholder}
+    />
+  </div>
+);
+
+const CheckboxInput = ({ 
+  label, 
+  field,
+  value,
+  onChange,
+  onSave 
+}: { 
+  label: string; 
+  field: keyof K1Form; 
+  value: any;
+  onChange: (field: keyof K1Form, value: any) => void;
+  onSave: (field: keyof K1Form) => void;
+}) => (
+  <div className="flex items-center space-x-2">
+    <Checkbox
+      id={field}
+      defaultChecked={!!value}
+      onCheckedChange={(checked) => {
+        onChange(field, checked);
+        onSave(field);
+      }}
+    />
+    <Label htmlFor={field} className="text-sm font-normal">{label}</Label>
+  </div>
+);
+
