@@ -135,6 +135,12 @@ export interface OwnershipInterest {
   effective_to: string | null;
   ownership_class: string | null;
   notes: string | null;
+  inception_basis_year: number | null;
+  contributed_cash_property: string | null;
+  purchase_price: string | null;
+  gift_inheritance: string | null;
+  taxable_compensation: string | null;
+  inception_basis_total: string | null;
   created_at: string;
   updated_at: string;
   owner_company?: K1Company;
@@ -149,11 +155,6 @@ export interface OutsideBasis {
   id: number;
   ownership_interest_id: number;
   tax_year: number;
-  contributed_cash_property: string | null;
-  purchase_price: string | null;
-  gift_inheritance: string | null;
-  taxable_compensation: string | null;
-  inception_basis_total: string | null;
   beginning_ob: string | null;
   ending_ob: string | null;
   notes: string | null;

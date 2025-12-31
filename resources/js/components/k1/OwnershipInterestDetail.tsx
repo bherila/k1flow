@@ -30,6 +30,10 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
   // Tax year selector for viewing basis/losses
   const [taxYear, setTaxYear] = useState(new Date().getFullYear() - 1);
   
+  // Inception Basis state (stored on ownership interest itself)
+  const inceptionDataRef = useRef<Partial<OwnershipInterest>>({});
+  const inceptionPendingRef = useRef<Set<keyof OwnershipInterest>>(new Set());
+  
   // Outside Basis state
   const [outsideBasis, setOutsideBasis] = useState<OutsideBasis | null>(null);
   const basisDataRef = useRef<Partial<OutsideBasis>>({});
@@ -64,6 +68,14 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
       setInterest(data);
       setOwnerCompany(data.owner_company);
       setOwnedCompany(data.owned_company);
+      inceptionDataRef.current = {
+        inception_basis_year: data.inception_basis_year,
+        contributed_cash_property: data.contributed_cash_property,
+        purchase_price: data.purchase_price,
+        gift_inheritance: data.gift_inheritance,
+        taxable_compensation: data.taxable_compensation,
+        inception_basis_total: data.inception_basis_total,
+      };
     } catch (error) {
       console.error('Failed to load ownership interest:', error);
     } finally {
@@ -145,6 +157,30 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
       setSaveStatus('error');
     }
   }, [interestId, taxYear]);
+
+  // Inception Basis field handlers (save directly to ownership interest)
+  const handleInceptionChange = useCallback((field: keyof OwnershipInterest, value: any) => {
+    inceptionDataRef.current = { ...inceptionDataRef.current, [field]: value };
+    inceptionPendingRef.current.add(field);
+  }, []);
+
+  const saveInceptionField = useCallback(async (field: keyof OwnershipInterest) => {
+    if (!inceptionPendingRef.current.has(field)) return;
+
+    setSaveStatus('saving');
+    try {
+      const payload = { [field]: inceptionDataRef.current[field] };
+      const updated = await fetchWrapper.put(`/api/ownership-interests/${interestId}`, payload);
+      setInterest(updated);
+      inceptionDataRef.current = { ...inceptionDataRef.current, ...payload };
+      inceptionPendingRef.current.delete(field);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Failed to save:', error);
+      setSaveStatus('error');
+    }
+  }, [interestId]);
 
   // Adjustments
   const addAdjustment = async (category: 'increase' | 'decrease') => {
@@ -245,9 +281,14 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
   const increases = outsideBasis?.adjustments?.filter(a => a.adjustment_category === 'increase') || [];
   const decreases = outsideBasis?.adjustments?.filter(a => a.adjustment_category === 'decrease') || [];
 
-  // Generate year options (current year -10 to current year)
+  // Generate year options (current year -10 to current year, but not before inception_basis_year)
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - i);
+  const inceptionYear = interest?.inception_basis_year ?? null;
+  const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - i)
+    .filter(year => inceptionYear === null || year >= inceptionYear);
+  
+  // Filter carryforwards to show only those where origin_year <= selected taxYear
+  const filteredCarryforwards = carryforwards.filter(cf => cf.origin_year <= taxYear);
 
   return (
     <div className="space-y-6">
@@ -301,6 +342,58 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
         </div>
       </div>
 
+      {/* Inception Basis Card - Outside of Tabs since it's a one-time value */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Inception Basis</CardTitle>
+          <CardDescription>How the partnership interest was originally acquired (one-time acquisition values)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid gap-2">
+              <Label>Inception Year</Label>
+              <Input
+                type="number"
+                placeholder="e.g., 2020"
+                defaultValue={interest.inception_basis_year ?? ''}
+                onChange={(e) => handleInceptionChange('inception_basis_year', e.target.value ? parseInt(e.target.value) : null)}
+                onBlur={() => saveInceptionField('inception_basis_year')}
+              />
+            </div>
+            <MoneyInput
+              label="Contributed Cash/Property"
+              value={interest.contributed_cash_property}
+              onChange={(v) => handleInceptionChange('contributed_cash_property', v || null)}
+              onBlur={() => saveInceptionField('contributed_cash_property')}
+            />
+            <MoneyInput
+              label="Purchase Price"
+              value={interest.purchase_price}
+              onChange={(v) => handleInceptionChange('purchase_price', v || null)}
+              onBlur={() => saveInceptionField('purchase_price')}
+            />
+            <MoneyInput
+              label="Gift/Inheritance"
+              value={interest.gift_inheritance}
+              onChange={(v) => handleInceptionChange('gift_inheritance', v || null)}
+              onBlur={() => saveInceptionField('gift_inheritance')}
+            />
+            <MoneyInput
+              label="Taxable Compensation"
+              value={interest.taxable_compensation}
+              onChange={(v) => handleInceptionChange('taxable_compensation', v || null)}
+              onBlur={() => saveInceptionField('taxable_compensation')}
+            />
+            <MoneyInput
+              label="Inception Basis Total"
+              value={interest.inception_basis_total}
+              onChange={(v) => handleInceptionChange('inception_basis_total', v || null)}
+              onBlur={() => saveInceptionField('inception_basis_total')}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Tabs */}
       <Tabs defaultValue="basis" className="space-y-4">
         <TabsList className="grid grid-cols-3 w-full max-w-md">
@@ -312,41 +405,6 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
         {/* Outside Basis Tab */}
         <TabsContent value="basis">
           <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Inception Basis</CardTitle>
-                <CardDescription>How the partnership interest was originally acquired</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <MoneyInput
-                    label="Contributed Cash/Property"
-                    value={outsideBasis?.contributed_cash_property}
-                    onChange={(v) => handleBasisChange('contributed_cash_property', v || null)}
-                    onBlur={() => saveBasisField('contributed_cash_property')}
-                  />
-                  <MoneyInput
-                    label="Purchase Price"
-                    value={outsideBasis?.purchase_price}
-                    onChange={(v) => handleBasisChange('purchase_price', v || null)}
-                    onBlur={() => saveBasisField('purchase_price')}
-                  />
-                  <MoneyInput
-                    label="Gift/Inheritance"
-                    value={outsideBasis?.gift_inheritance}
-                    onChange={(v) => handleBasisChange('gift_inheritance', v || null)}
-                    onBlur={() => saveBasisField('gift_inheritance')}
-                  />
-                  <MoneyInput
-                    label="Taxable Compensation"
-                    value={outsideBasis?.taxable_compensation}
-                    onChange={(v) => handleBasisChange('taxable_compensation', v || null)}
-                    onBlur={() => saveBasisField('taxable_compensation')}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Current Year Basis ({taxYear})</CardTitle>
@@ -575,20 +633,20 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Loss Carryforwards</CardTitle>
-                <CardDescription>Track suspended losses from prior years</CardDescription>
+                <CardDescription>Track suspended losses from prior years (showing carryforwards from {taxYear} and earlier)</CardDescription>
               </div>
               <Button size="sm" onClick={addCarryforward}>
                 <Plus className="mr-2 h-4 w-4" /> Add Carryforward
               </Button>
             </CardHeader>
             <CardContent>
-              {carryforwards.length === 0 ? (
+              {filteredCarryforwards.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">
-                  No loss carryforwards recorded
+                  No loss carryforwards recorded for {taxYear} or earlier
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {carryforwards.map((cf) => (
+                  {filteredCarryforwards.map((cf) => (
                     <div key={cf.id} className="p-4 border rounded-lg space-y-3">
                       <div className="flex items-center gap-3">
                         <div className="grid gap-1 flex-1">

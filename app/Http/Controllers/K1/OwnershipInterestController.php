@@ -103,6 +103,12 @@ class OwnershipInterestController extends Controller
             'effective_to' => 'nullable|date',
             'ownership_class' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
+            'inception_basis_year' => 'nullable|integer|min:1900|max:2100',
+            'contributed_cash_property' => 'nullable|numeric',
+            'purchase_price' => 'nullable|numeric',
+            'gift_inheritance' => 'nullable|numeric',
+            'taxable_compensation' => 'nullable|numeric',
+            'inception_basis_total' => 'nullable|numeric',
         ]);
 
         // Prevent self-ownership
