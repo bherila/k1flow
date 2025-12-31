@@ -108,9 +108,6 @@ export interface K1Form {
   // Relations
   company?: K1Company;
   income_sources?: K1IncomeSource[];
-  outside_basis?: K1OutsideBasis;
-  loss_limitations?: K1LossLimitation;
-  loss_carryforwards?: K1LossCarryforward[];
 }
 
 // Income Source types
@@ -128,10 +125,30 @@ export interface K1IncomeSource {
   updated_at: string;
 }
 
-// Outside Basis
-export interface K1OutsideBasis {
+// Ownership Interest - represents ownership in a partnership/S-corp
+export interface OwnershipInterest {
   id: number;
-  k1_form_id: number;
+  owner_company_id: number | null;
+  owned_company_id: number;
+  ownership_percentage: string;
+  effective_from: string | null;
+  effective_to: string | null;
+  ownership_class: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  owner_company?: K1Company;
+  owned_company?: K1Company;
+  outside_basis?: OutsideBasis[];
+  loss_limitations?: LossLimitation[];
+  loss_carryforwards?: LossCarryforward[];
+}
+
+// Outside Basis - now linked to OwnershipInterest + tax_year
+export interface OutsideBasis {
+  id: number;
+  ownership_interest_id: number;
+  tax_year: number;
   contributed_cash_property: string | null;
   purchase_price: string | null;
   gift_inheritance: string | null;
@@ -142,33 +159,29 @@ export interface K1OutsideBasis {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  adjustments?: K1ObAdjustment[];
+  adjustments?: ObAdjustment[];
 }
 
 // OB Adjustment
 export type AdjustmentCategory = 'increase' | 'decrease';
 
-export interface K1ObAdjustment {
+export interface ObAdjustment {
   id: number;
   outside_basis_id: number;
   adjustment_category: AdjustmentCategory;
-  contributed_cash_property: string | null;
-  increase_share_liabilities: string | null;
-  share_income_gain: string | null;
-  excess_depletion: string | null;
-  distributions: string | null;
-  losses: string | null;
-  decrease_share_liabilities: string | null;
+  adjustment_type: string | null;
+  amount: string | null;
   description: string | null;
-  notes: string | null;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }
 
-// Loss Limitations
-export interface K1LossLimitation {
+// Loss Limitations - now linked to OwnershipInterest + tax_year
+export interface LossLimitation {
   id: number;
-  k1_form_id: number;
+  ownership_interest_id: number;
+  tax_year: number;
   capital_at_risk: string | null;
   at_risk_deductible: string | null;
   at_risk_carryover: string | null;
@@ -183,43 +196,17 @@ export interface K1LossLimitation {
 }
 
 // Loss Carryforward types
-export type LossType = 
-  | 'ordinary'
-  | 'capital_short_term'
-  | 'capital_long_term'
-  | 'section_1231'
-  | 'passive'
-  | 'at_risk'
-  | 'excess_business_loss'
-  | 'other';
+export type CarryforwardType = 'at_risk' | 'passive' | 'excess_business_loss';
 
-export interface K1LossCarryforward {
+export interface LossCarryforward {
   id: number;
-  k1_form_id: number;
-  loss_type: LossType;
-  character: string | null;
-  amount: string;
-  origination_year: number | null;
-  utilized_current_year: string | null;
-  remaining_carryforward: string | null;
-  description: string | null;
+  ownership_interest_id: number;
+  origin_year: number;
+  carryforward_type: CarryforwardType;
+  loss_character: string | null;
+  original_amount: string;
+  remaining_amount: string;
   notes: string | null;
   created_at: string;
   updated_at: string;
-}
-
-// Ownership
-export interface K1Ownership {
-  id: number;
-  owner_company_id: number | null;
-  owned_company_id: number;
-  ownership_percentage: string;
-  effective_from: string | null;
-  effective_to: string | null;
-  ownership_class: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  owner_company?: K1Company;
-  owned_company?: K1Company;
 }

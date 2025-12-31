@@ -17,7 +17,6 @@ class K1FormController extends Controller
     public function index(K1Company $company): JsonResponse
     {
         $forms = $company->k1Forms()
-            ->with(['outsideBasis', 'lossLimitations'])
             ->orderBy('tax_year', 'desc')
             ->get();
 
@@ -131,7 +130,7 @@ class K1FormController extends Controller
             abort(404);
         }
 
-        $form->load(['incomeSources', 'outsideBasis.adjustments', 'lossLimitations', 'lossCarryforwards']);
+        $form->load(['incomeSources']);
 
         return response()->json($form);
     }

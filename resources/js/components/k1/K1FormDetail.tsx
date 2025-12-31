@@ -56,6 +56,7 @@ export default function K1FormDetail({ companyId, formId }: Props) {
   };
 
   // Auto-save on blur - only saves changed fields
+  // NOTE: We do NOT call setForm() here to avoid re-rendering which causes focus loss
   const saveField = useCallback(async (field: keyof K1Form) => {
     if (!pendingChangesRef.current.has(field)) return;
     
@@ -64,7 +65,7 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     try {
       const payload = { [field]: formDataRef.current[field] };
       const updated = await fetchWrapper.put(`/api/companies/${companyId}/forms/${formId}`, payload);
-      setForm(updated);
+      // Only update the ref, not the state, to prevent re-render and focus loss
       formDataRef.current = { ...updated };
       pendingChangesRef.current.delete(field);
       setSaveStatus('saved');
@@ -320,12 +321,10 @@ export default function K1FormDetail({ companyId, formId }: Props) {
 
       {/* Tabs for different K-1 sections */}
       <Tabs defaultValue="partnership" className="space-y-4">
-        <TabsList className="grid grid-cols-5 w-full max-w-3xl">
+        <TabsList className="grid grid-cols-3 w-full max-w-md">
           <TabsTrigger value="partnership">Part I</TabsTrigger>
           <TabsTrigger value="partner">Part II</TabsTrigger>
           <TabsTrigger value="income">Part III</TabsTrigger>
-          <TabsTrigger value="basis">Outside Basis</TabsTrigger>
-          <TabsTrigger value="losses">Losses</TabsTrigger>
         </TabsList>
 
         {/* Part I - Partnership Info */}
@@ -347,7 +346,7 @@ export default function K1FormDetail({ companyId, formId }: Props) {
                   <Input
                     id="partnership_tax_year_begin"
                     type="date"
-                    defaultValue={(form.partnership_tax_year_begin as string)?.split('T')[0] ?? ''}
+                    defaultValue={(form.partnership_tax_year_begin as string)?.substring(0, 10) ?? ''}
                     onChange={(e) => handleChange('partnership_tax_year_begin', e.target.value || null)}
                     onBlur={() => saveField('partnership_tax_year_begin')}
                   />
@@ -357,7 +356,7 @@ export default function K1FormDetail({ companyId, formId }: Props) {
                   <Input
                     id="partnership_tax_year_end"
                     type="date"
-                    defaultValue={(form.partnership_tax_year_end as string)?.split('T')[0] ?? ''}
+                    defaultValue={(form.partnership_tax_year_end as string)?.substring(0, 10) ?? ''}
                     onChange={(e) => handleChange('partnership_tax_year_end', e.target.value || null)}
                     onBlur={() => saveField('partnership_tax_year_end')}
                   />
@@ -551,48 +550,6 @@ export default function K1FormDetail({ companyId, formId }: Props) {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        {/* Outside Basis */}
-        <TabsContent value="basis">
-          <Card>
-            <CardHeader>
-              <CardTitle>Outside Basis Tracking</CardTitle>
-              <CardDescription>
-                Track your tax basis in the partnership interest for loss limitation purposes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Outside basis tracking is available in the detailed view.
-                <br />
-                <a href={`/company/${companyId}/k1/${formId}/basis`} className="text-primary hover:underline">
-                  Go to Outside Basis →
-                </a>
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Loss Limitations */}
-        <TabsContent value="losses">
-          <Card>
-            <CardHeader>
-              <CardTitle>Loss Limitations & Carryforwards</CardTitle>
-              <CardDescription>
-                Track suspended losses and limitation calculations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Loss limitation tracking is available in the detailed view.
-                <br />
-                <a href={`/company/${companyId}/k1/${formId}/losses`} className="text-primary hover:underline">
-                  Go to Loss Limitations →
-                </a>
-              </p>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
 

@@ -12,6 +12,7 @@ export default defineConfig({
         'resources/js/app.jsx',
         'resources/js/navbar.tsx',
         'resources/js/home.tsx',
+        'resources/js/ownership-interest.tsx',
       ],
       refresh: true,
     }),

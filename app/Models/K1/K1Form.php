@@ -6,7 +6,6 @@ use App\Traits\SerializesDatesAsLocal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class K1Form extends Model
 {
@@ -135,20 +134,5 @@ class K1Form extends Model
     public function incomeSources(): HasMany
     {
         return $this->hasMany(K1IncomeSource::class, 'k1_form_id');
-    }
-
-    public function outsideBasis(): HasOne
-    {
-        return $this->hasOne(K1OutsideBasis::class, 'k1_form_id');
-    }
-
-    public function lossLimitations(): HasOne
-    {
-        return $this->hasOne(K1LossLimitation::class, 'k1_form_id');
-    }
-
-    public function lossCarryforwards(): HasMany
-    {
-        return $this->hasMany(K1LossCarryforward::class, 'k1_form_id');
     }
 }

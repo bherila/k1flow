@@ -29,18 +29,20 @@ class K1Company extends Model
     }
 
     /**
-     * Get ownership records where this company is the owner.
+     * Get ownership interests where this company is the owner (investor).
+     * These are partnerships/S-corps that this company owns.
      */
-    public function ownedCompanies(): HasMany
+    public function ownershipInterests(): HasMany
     {
-        return $this->hasMany(K1Ownership::class, 'owner_company_id');
+        return $this->hasMany(OwnershipInterest::class, 'owner_company_id');
     }
 
     /**
-     * Get ownership records where this company is owned by others.
+     * Get ownership interests where this company is owned (the entity being invested in).
+     * These represent who owns this company.
      */
-    public function owners(): HasMany
+    public function ownedBy(): HasMany
     {
-        return $this->hasMany(K1Ownership::class, 'owned_company_id');
+        return $this->hasMany(OwnershipInterest::class, 'owned_company_id');
     }
 }

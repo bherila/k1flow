@@ -7,7 +7,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Company detail view with K-1 forms
+// Company detail view with K-1 forms and ownership interests
 Route::get('/company/{id}', function ($id) {
     return view('company', ['id' => $id]);
 });
@@ -17,12 +17,7 @@ Route::get('/company/{companyId}/k1/{formId}', function ($companyId, $formId) {
     return view('k1-form', ['companyId' => $companyId, 'formId' => $formId]);
 });
 
-// Outside Basis tracking view
-Route::get('/company/{companyId}/k1/{formId}/basis', function ($companyId, $formId) {
-    return view('k1-outside-basis', ['companyId' => $companyId, 'formId' => $formId]);
-});
-
-// Loss Limitations tracking view
-Route::get('/company/{companyId}/k1/{formId}/losses', function ($companyId, $formId) {
-    return view('k1-loss-limitations', ['companyId' => $companyId, 'formId' => $formId]);
+// Ownership Interest detail view (includes outside basis and loss limitations)
+Route::get('/ownership/{interestId}', function ($interestId) {
+    return view('ownership-interest', ['interestId' => $interestId]);
 });
