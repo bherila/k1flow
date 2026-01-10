@@ -27,9 +27,9 @@ Route::get('/ownership/{interestId}', function ($interestId) {
 
 
 
-// Ownership Basis Drill-down
+// Ownership Basis Adjustments (Merged Increases/Decreases)
 
-Route::get('/ownership/{interestId}/basis/{year}/{type}', function ($interestId, $year, $type) {
+Route::get('/ownership/{interestId}/basis/{year}/adjustments', function ($interestId, $year) {
 
     return view('ownership-basis-detail', [
 
@@ -37,8 +37,8 @@ Route::get('/ownership/{interestId}/basis/{year}/{type}', function ($interestId,
 
         'year' => $year,
 
-        'type' => $type
-
     ]);
 
-})->where('type', 'increases|decreases');
+});
+
+

@@ -63,7 +63,7 @@ export default function InceptionBasisModal({ interest, onSave, onSaved }: Props
   
   // Form state
   const [inceptionDate, setInceptionDate] = useState(interest.inception_date ?? '');
-  const [method, setMethod] = useState<MethodOfAcquisition | ''>(interest.method_of_acquisition ?? '');
+  const [method, setMethod] = useState<MethodOfAcquisition | ''>(interest.method_of_acquisition ?? 'purchase');
   
   // Purchase fields
   const [purchasePrice, setPurchasePrice] = useState(interest.purchase_price ?? '');
@@ -90,7 +90,7 @@ export default function InceptionBasisModal({ interest, onSave, onSaved }: Props
   useEffect(() => {
     if (open) {
       setInceptionDate(interest.inception_date ?? '');
-      setMethod(interest.method_of_acquisition ?? '');
+      setMethod(interest.method_of_acquisition ?? 'purchase');
       setPurchasePrice(interest.purchase_price ?? '');
       setGiftDate(interest.gift_date ?? '');
       setGiftDonorBasis(interest.gift_donor_basis ?? '');

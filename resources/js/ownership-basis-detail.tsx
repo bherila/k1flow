@@ -35,13 +35,12 @@ const mount = document.getElementById('ownership-basis-detail');
 if (mount) {
   const interestId = parseInt(mount.dataset.interestId || '0', 10);
   const year = parseInt(mount.dataset.year || '0', 10);
-  const type = mount.dataset.type as 'increases' | 'decreases';
   
   try {
     const root = createRoot(mount);
     root.render(
       <ErrorBoundary>
-        <OwnershipBasisDetail interestId={interestId} year={year} type={type} />
+        <OwnershipBasisDetail interestId={interestId} year={year} />
       </ErrorBoundary>
     );
   } catch (error) {

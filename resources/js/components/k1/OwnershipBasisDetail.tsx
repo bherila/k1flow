@@ -11,6 +11,7 @@ import { formatCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
@@ -47,17 +48,13 @@ const DECREASE_LABELS: Record<string, string> = {
 interface Props {
   interestId: number;
   year: number;
-  type: 'increases' | 'decreases';
 }
 
-export default function OwnershipBasisDetail({ interestId, year, type }: Props) {
+export default function OwnershipBasisDetail({ interestId, year }: Props) {
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
   const [yearDetail, setYearDetail] = useState<OutsideBasis | null>(null);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-
-  const category: AdjustmentCategory = type === 'increases' ? 'increase' : 'decrease';
-  const labels = type === 'increases' ? INCREASE_LABELS : DECREASE_LABELS;
 
   const loadData = useCallback(async () => {
     try {
@@ -80,7 +77,7 @@ export default function OwnershipBasisDetail({ interestId, year, type }: Props) 
   }, [loadData]);
 
   // Add a new adjustment
-  const addAdjustment = async (typeCode: string) => {
+  const addAdjustment = async (category: AdjustmentCategory, typeCode: string) => {
     try {
       setSaveStatus('saving');
       const newAdj = await fetchWrapper.post(
@@ -97,6 +94,7 @@ export default function OwnershipBasisDetail({ interestId, year, type }: Props) 
       } : prev);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
+      loadData(); // Reload to update totals
     } catch (error) {
       console.error('Failed to add adjustment:', error);
       setSaveStatus('error');
@@ -116,6 +114,7 @@ export default function OwnershipBasisDetail({ interestId, year, type }: Props) 
       } : prev);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
+      loadData(); // Reload to update totals
     } catch (error) {
       console.error('Failed to update adjustment:', error);
       setSaveStatus('error');
@@ -130,8 +129,41 @@ export default function OwnershipBasisDetail({ interestId, year, type }: Props) 
         ...prev,
         adjustments: (prev.adjustments || []).filter(adj => adj.id !== id),
       } : prev);
+      loadData(); // Reload to update totals
     } catch (error) {
       console.error('Failed to delete adjustment:', error);
+    }
+  };
+
+  // Update ending basis override
+  const updateEndingBasis = async (value: string) => {
+    try {
+      setSaveStatus('saving');
+      await fetchWrapper.put(`/api/ownership-interests/${interestId}/basis/${year}`, {
+        ending_ob: value || null,
+      });
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+      loadData(); // Reload to recalculate
+    } catch (error) {
+      console.error('Failed to update ending basis:', error);
+      setSaveStatus('error');
+    }
+  };
+
+  // Save notes
+  const saveNotes = async (notes: string) => {
+    try {
+      setSaveStatus('saving');
+      await fetchWrapper.put(
+        `/api/ownership-interests/${interestId}/basis/${year}`,
+        { notes: notes || null }
+      );
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Failed to save notes:', error);
+      setSaveStatus('error');
     }
   };
 
@@ -143,11 +175,14 @@ export default function OwnershipBasisDetail({ interestId, year, type }: Props) 
     );
   }
 
-  const adjustments = yearDetail?.adjustments?.filter(a => a.adjustment_category === category) || [];
-  const total = adjustments.reduce((sum, adj) => sum + parseFloat(adj.amount || '0'), 0);
+  const increases = yearDetail?.adjustments?.filter(a => a.adjustment_category === 'increase') || [];
+  const decreases = yearDetail?.adjustments?.filter(a => a.adjustment_category === 'decrease') || [];
+  
+  const totalIncreases = increases.reduce((sum, adj) => sum + parseFloat(adj.amount || '0'), 0);
+  const totalDecreases = decreases.reduce((sum, adj) => sum + parseFloat(adj.amount || '0'), 0);
 
   return (
-    <div className="space-y-6 container mx-auto py-8 max-w-4xl">
+    <div className="space-y-6 container mx-auto py-8 max-w-5xl">
       {/* Breadcrumb / Back Link */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" className="pl-0 gap-2" onClick={() => window.location.href = `/ownership/${interestId}`}>
@@ -159,117 +194,265 @@ export default function OwnershipBasisDetail({ interestId, year, type }: Props) 
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          {year} {type === 'increases' ? 'Increases' : 'Decreases'} to Basis
+          {year} Basis Adjustments
         </h1>
         {interest && (
           <p className="text-muted-foreground mt-1">
             {interest.owner_company?.name} interest in {interest.owned_company?.name}
           </p>
         )}
+        <div className="mt-2 h-6">
+          {saveStatus === 'saving' && <span className="text-sm text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving...</span>}
+          {saveStatus === 'saved' && <span className="text-sm text-green-600">✓ Saved</span>}
+          {saveStatus === 'error' && <span className="text-sm text-red-600">Failed to save</span>}
+        </div>
       </div>
 
+      {/* Summary Stats */}
+      <div className="grid grid-cols-4 gap-4">
+        <Card className="bg-muted/50">
+          <CardHeader className="py-4">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Starting Basis</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <div className="text-2xl font-mono font-bold">
+               {yearDetail?.starting_basis !== undefined && yearDetail.starting_basis !== null 
+                  ? formatCurrency(yearDetail.starting_basis) 
+                  : '—'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="py-4">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Increases</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <div className="text-2xl font-mono font-bold text-green-600">
+              +{formatCurrency(totalIncreases)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="py-4">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Decreases</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <div className="text-2xl font-mono font-bold text-red-600">
+              -{formatCurrency(totalDecreases)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-primary/5 border-primary/20">
+          <CardHeader className="py-4">
+            <CardTitle className="text-sm font-medium text-foreground">Ending Basis</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <div className="text-2xl font-mono font-bold">
+              {yearDetail?.ending_basis !== undefined && yearDetail.ending_basis !== null 
+                  ? formatCurrency(yearDetail.ending_basis) 
+                  : '—'}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Increases Column */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-green-700">Increases</h2>
+            <AddAdjustmentDropdown 
+              category="increase" 
+              onAdd={(typeCode) => addAdjustment('increase', typeCode)} 
+            />
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              {increases.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No increases recorded
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {increases.map((adj) => (
+                    <AdjustmentRow 
+                      key={adj.id} 
+                      adjustment={adj} 
+                      onUpdate={updateAdjustment}
+                      onDelete={deleteAdjustment}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Decreases Column */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-red-700">Decreases</h2>
+            <AddAdjustmentDropdown 
+              category="decrease" 
+              onAdd={(typeCode) => addAdjustment('decrease', typeCode)} 
+            />
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              {decreases.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No decreases recorded
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {decreases.map((adj) => (
+                    <AdjustmentRow 
+                      key={adj.id} 
+                      adjustment={adj} 
+                      onUpdate={updateAdjustment}
+                      onDelete={deleteAdjustment}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Footer Section: Override and Notes */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Adjustments</CardTitle>
-            <CardDescription>
-              {type === 'increases' 
-                ? 'Items that increase your outside basis (e.g. contributions, income)' 
-                : 'Items that decrease your outside basis (e.g. distributions, losses)'}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            {saveStatus === 'saving' && <span className="text-sm text-muted-foreground">Saving...</span>}
-            {saveStatus === 'saved' && <span className="text-sm text-green-600">✓ Saved</span>}
-            <Select onValueChange={addAdjustment}>
-              <SelectTrigger className="w-[200px]">
-                <Plus className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Add adjustment" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(labels).map(([code, label]) => (
-                  <SelectItem key={code} value={code}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <CardHeader>
+          <CardTitle>Year-End Adjustments</CardTitle>
         </CardHeader>
-        <CardContent>
-          {adjustments.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground">No adjustments recorded for this category.</p>
-              <p className="text-sm text-muted-foreground mt-1">Use the "Add adjustment" button to add one.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {adjustments.map((adj) => (
-                <div key={adj.id} className="flex items-start gap-4 p-4 border rounded-lg bg-card">
-                  <div className="flex-1 space-y-2">
-                    <div className="font-medium">
-                       {labels[adj.adjustment_type_code || ''] || adj.adjustment_type || 'Other'}
-                    </div>
-                    {/* Description input for "Other" or generic notes */}
-                    <Input
-                      className="text-sm"
-                      placeholder="Description / Notes..."
-                      defaultValue={adj.description ?? ''}
-                      onBlur={(e) => updateAdjustment(adj.id, 'description', e.target.value || null)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground block text-right">Amount</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      className="w-40 font-mono text-right"
-                      defaultValue={adj.amount ?? ''}
-                      onBlur={(e) => updateAdjustment(adj.id, 'amount', e.target.value || null)}
-                    />
-                  </div>
-
-                  <div className="pt-6 flex gap-1">
-                    {adj.document_name ? (
-                      <Button variant="ghost" size="icon" title={adj.document_name}>
-                        <FileText className="h-4 w-4 text-blue-500" />
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="Attach document (coming soon)"
-                        disabled
-                        className="text-muted-foreground"
-                      >
-                        <Upload className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => deleteAdjustment(adj.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-
-              <div className="flex justify-end pt-4 border-t mt-4">
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Total {type === 'increases' ? 'Increases' : 'Decreases'}</p>
-                  <p className={`text-2xl font-mono font-bold ${type === 'increases' ? 'text-green-600' : 'text-red-600'}`}>
-                    {type === 'increases' ? '+' : '-'}{formatCurrency(total)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+        <CardContent className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+             <Label htmlFor="ending-basis">Ending Basis Override</Label>
+             <div className="flex gap-2">
+               <Input
+                  id="ending-basis"
+                  type="number"
+                  step="0.01"
+                  className="font-mono"
+                  placeholder="Leave empty to use calculated value"
+                  defaultValue={yearDetail?.ending_ob ?? ''}
+                  onBlur={(e) => updateEndingBasis(e.target.value)}
+                />
+             </div>
+             <p className="text-xs text-muted-foreground">
+               Manually override the calculated ending basis if necessary.
+             </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              placeholder="Add notes for this tax year..."
+              defaultValue={yearDetail?.notes ?? ''}
+              onBlur={(e) => saveNotes(e.target.value)}
+            />
+          </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// Dropdown to add a new adjustment of a specific type
+function AddAdjustmentDropdown({ 
+  category, 
+  onAdd 
+}: { 
+  category: AdjustmentCategory; 
+  onAdd: (typeCode: string) => void;
+}) {
+  const labels = category === 'increase' ? INCREASE_LABELS : DECREASE_LABELS;
+  
+  return (
+    <Select onValueChange={onAdd}>
+      <SelectTrigger className="w-[180px]">
+        <Plus className="h-4 w-4 mr-2" />
+        <SelectValue placeholder="Add adjustment" />
+      </SelectTrigger>
+      <SelectContent>
+        {Object.entries(labels).map(([code, label]) => (
+          <SelectItem key={code} value={code}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+// Individual adjustment row
+function AdjustmentRow({ 
+  adjustment, 
+  onUpdate, 
+  onDelete 
+}: { 
+  adjustment: ObAdjustment;
+  onUpdate: (id: number, field: string, value: any) => void;
+  onDelete: (id: number) => void;
+}) {
+  const labels = adjustment.adjustment_category === 'increase' ? INCREASE_LABELS : DECREASE_LABELS;
+  const typeLabel = adjustment.adjustment_type_code 
+    ? labels[adjustment.adjustment_type_code] || adjustment.adjustment_type_code
+    : adjustment.adjustment_type || 'Other';
+
+  const isOther = adjustment.adjustment_type_code === 'other_increase' || 
+                  adjustment.adjustment_type_code === 'other_decrease';
+
+  return (
+    <div className="p-4 bg-card group relative">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="font-medium text-sm">{typeLabel}</div>
+          <Input
+            className="h-8 text-sm"
+            placeholder="Description..."
+            defaultValue={adjustment.description ?? ''}
+            onBlur={(e) => onUpdate(adjustment.id, 'description', e.target.value || null)}
+          />
+        </div>
+        <div className="text-right space-y-1">
+           <div className="text-xs text-muted-foreground">Amount</div>
+           <Input
+            type="number"
+            step="0.01"
+            className="h-8 w-32 font-mono text-right"
+            defaultValue={adjustment.amount ?? ''}
+            onBlur={(e) => onUpdate(adjustment.id, 'amount', e.target.value || null)}
+          />
+        </div>
+      </div>
+      
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-card border rounded shadow-sm p-1">
+         {adjustment.document_name ? (
+            <Button variant="ghost" size="icon" className="h-6 w-6" title={adjustment.document_name}>
+              <FileText className="h-3 w-3 text-blue-500" />
+            </Button>
+          ) : (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 text-muted-foreground"
+              title="Attach document (coming soon)"
+              disabled
+            >
+              <Upload className="h-3 w-3" />
+            </Button>
+          )}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-6 w-6 text-destructive hover:bg-destructive/10"
+            onClick={() => onDelete(adjustment.id)}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+      </div>
     </div>
   );
 }

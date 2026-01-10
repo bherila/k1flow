@@ -5,7 +5,6 @@
         id="ownership-basis-detail" 
         data-interest-id="{{ $interestId }}"
         data-year="{{ $year }}"
-        data-type="{{ $type }}"
     ></div>
 @endsection
 
