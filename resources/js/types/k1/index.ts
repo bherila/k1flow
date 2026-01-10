@@ -256,6 +256,7 @@ export interface BasisWalkYear {
   ending_basis: number | null;
   has_adjustments: boolean;
   adjustments_count: number;
+  record?: OutsideBasis | null;
 }
 
 export interface BasisWalkResponse {

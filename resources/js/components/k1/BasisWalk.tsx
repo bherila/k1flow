@@ -21,7 +21,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { ChevronRight, Loader2, Info } from 'lucide-react';
+import { ChevronRight, Loader2, Info, AlertCircle } from 'lucide-react';
 
 // Local copies of the labels
 const INCREASE_LABELS: Record<string, string> = {
@@ -317,49 +317,63 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                   const isInception = idx === 0;
                   const nextYear = years[idx + 1];
                   const nextYearData = nextYear ? basisWalk.find(y => y.tax_year === nextYear) : null;
+                  const isOverride = yearData?.record?.ending_ob !== null && yearData?.record?.ending_ob !== undefined;
                   
                   return (
                     <TableCell 
                       key={year} 
                       className={`text-right font-mono ${isInception ? 'border-r' : ''}`}
                     >
-                      <HoverCard openDelay={200} closeDelay={100}>
-                        <HoverCardTrigger asChild>
-                          <a
-                            href={`/ownership/${interestId}/basis/${year}/adjustments`}
-                            className="hover:underline cursor-pointer block w-full text-right"
-                          >
-                            {yearData?.ending_basis !== null && yearData?.ending_basis !== undefined
-                              ? formatCurrency(yearData.ending_basis) 
-                              : '—'}
-                          </a>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-80" align="start">
-                          <div className="space-y-2">
-                            <h4 className="font-semibold">{year} Ending Basis</h4>
-                            <p className="text-sm">
-                              Beginning: {yearData?.starting_basis !== null ? formatCurrency(yearData?.starting_basis ?? 0) : formatCurrency(parseFloat(effectiveInceptionBasis))}
-                            </p>
-                            <p className="text-sm text-green-600">
-                              + Increases: {formatCurrency(yearData?.total_increases ?? 0)}
-                            </p>
-                            <p className="text-sm text-red-600">
-                              - Decreases: {formatCurrency(yearData?.total_decreases ?? 0)}
-                            </p>
-                            <p className="text-sm font-semibold border-t pt-2">
-                              = Ending: {yearData?.ending_basis !== null && yearData?.ending_basis !== undefined ? formatCurrency(yearData.ending_basis) : '—'}
-                            </p>
-                            {nextYearData && (
-                              <p className="text-xs text-muted-foreground mt-2">
-                                → Carries forward to {nextYear} as beginning basis
+                      <div className="flex items-center justify-end gap-1">
+                        {isOverride && (
+                          <HoverCard openDelay={200} closeDelay={100}>
+                            <HoverCardTrigger>
+                              <AlertCircle className="h-3 w-3 text-amber-500 cursor-help" />
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-auto p-2">
+                              <p className="text-xs font-medium text-amber-700">Override</p>
+                            </HoverCardContent>
+                          </HoverCard>
+                        )}
+                        <HoverCard openDelay={200} closeDelay={100}>
+                          <HoverCardTrigger asChild>
+                            <a
+                              href={`/ownership/${interestId}/basis/${year}/adjustments`}
+                              className="hover:underline cursor-pointer block text-right"
+                            >
+                              {yearData?.ending_basis !== null && yearData?.ending_basis !== undefined
+                                ? formatCurrency(yearData.ending_basis) 
+                                : '—'}
+                            </a>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-80" align="start">
+                            <div className="space-y-2">
+                              <h4 className="font-semibold">{year} Ending Basis</h4>
+                              <p className="text-sm">
+                                Beginning: {yearData?.starting_basis !== null ? formatCurrency(yearData?.starting_basis ?? 0) : formatCurrency(parseFloat(effectiveInceptionBasis))}
                               </p>
-                            )}
-                            <div className="pt-2 text-xs text-blue-600 flex items-center">
-                               Click to view details <ChevronRight className="h-3 w-3 ml-1" />
+                              <p className="text-sm text-green-600">
+                                + Increases: {formatCurrency(yearData?.total_increases ?? 0)}
+                              </p>
+                              <p className="text-sm text-red-600">
+                                - Decreases: {formatCurrency(yearData?.total_decreases ?? 0)}
+                              </p>
+                              <p className="text-sm font-semibold border-t pt-2 flex items-center justify-between">
+                                <span>= Ending: {yearData?.ending_basis !== null && yearData?.ending_basis !== undefined ? formatCurrency(yearData.ending_basis) : '—'}</span>
+                                {isOverride && <span className="text-xs text-amber-600 font-normal px-1.5 py-0.5 bg-amber-100 rounded ml-2">Override</span>}
+                              </p>
+                              {nextYearData && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  → Carries forward to {nextYear} as beginning basis
+                                </p>
+                              )}
+                              <div className="pt-2 text-xs text-blue-600 flex items-center">
+                                 Click to view details <ChevronRight className="h-3 w-3 ml-1" />
+                              </div>
                             </div>
-                          </div>
-                        </HoverCardContent>
-                      </HoverCard>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </div>
                     </TableCell>
                   );
                 })}
@@ -389,12 +403,23 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
               const carryover = yearData.ending_basis;
               const nextBeginning = nextYearData.starting_basis;
               const matches = carryover === nextBeginning;
+              const isOverride = yearData?.record?.ending_ob !== null && yearData?.record?.ending_ob !== undefined;
               
               return (
                 <div key={year} className={`p-3 rounded-lg border ${matches ? 'bg-green-50 dark:bg-green-950 border-green-200' : 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200'}`}>
                   <div className="font-medium">{year} → {nextYear}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     Ending: {carryover !== null ? formatCurrency(carryover) : '—'}
+                    {isOverride && (
+                      <HoverCard openDelay={200} closeDelay={100}>
+                        <HoverCardTrigger>
+                          <AlertCircle className="h-3 w-3 text-amber-500 cursor-help" />
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-auto p-2">
+                          <p className="text-xs font-medium text-amber-700">Override</p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     Next Beginning: {nextBeginning !== null ? formatCurrency(nextBeginning) : '—'}
