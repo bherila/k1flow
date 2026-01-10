@@ -20,6 +20,9 @@ class LossLimitation extends Model
         'passive_loss_carryover',
         'excess_business_loss',
         'excess_business_loss_carryover',
+        'nol_deduction_used',
+        'nol_carryforward',
+        'nol_80_percent_limit',
         'notes',
     ];
 
@@ -33,6 +36,9 @@ class LossLimitation extends Model
         'passive_loss_carryover' => 'decimal:2',
         'excess_business_loss' => 'decimal:2',
         'excess_business_loss_carryover' => 'decimal:2',
+        'nol_deduction_used' => 'decimal:2',
+        'nol_carryforward' => 'decimal:2',
+        'nol_80_percent_limit' => 'decimal:2',
     ];
 
     /**

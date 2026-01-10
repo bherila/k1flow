@@ -43,6 +43,9 @@ Route::prefix('forms/{form}')->group(function () {
     Route::delete('income-sources/{source}', [K1IncomeSourceController::class, 'destroy']);
 });
 
+// Adjustment type options for UI dropdowns
+Route::get('adjustment-types', [OutsideBasisController::class, 'adjustmentTypes']);
+
 // Ownership Interests
 Route::prefix('ownership-interests')->group(function () {
     Route::get('/', [OwnershipInterestController::class, 'index']);
@@ -50,6 +53,9 @@ Route::prefix('ownership-interests')->group(function () {
     Route::get('{interest}', [OwnershipInterestController::class, 'show']);
     Route::put('{interest}', [OwnershipInterestController::class, 'update']);
     Route::delete('{interest}', [OwnershipInterestController::class, 'destroy']);
+    
+    // Basis Walk - full multi-year view
+    Route::get('{interest}/basis-walk', [OutsideBasisController::class, 'basisWalk']);
     
     // Outside Basis (per ownership interest, per tax year)
     Route::get('{interest}/basis/{taxYear}', [OutsideBasisController::class, 'show']);

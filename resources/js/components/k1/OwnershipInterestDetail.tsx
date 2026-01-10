@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
-import type { OwnershipInterest, OutsideBasis, ObAdjustment, LossLimitation, LossCarryforward, K1Company } from '@/types/k1';
+import type { OwnershipInterest, OutsideBasis, ObAdjustment, LossLimitation, LossCarryforward, K1Company, LossCharacter } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import BasisWalk from './BasisWalk';
+import InceptionBasisModal from './InceptionBasisModal';
 
 interface Props {
   interestId: number;
@@ -27,17 +29,15 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
   const [ownerCompany, setOwnerCompany] = useState<K1Company | null>(null);
   const [ownedCompany, setOwnedCompany] = useState<K1Company | null>(null);
   
-  // Tax year selector for viewing basis/losses
+  // Tax year selector for viewing losses
   const [taxYear, setTaxYear] = useState(new Date().getFullYear() - 1);
   
   // Inception Basis state (stored on ownership interest itself)
   const inceptionDataRef = useRef<Partial<OwnershipInterest>>({});
   const inceptionPendingRef = useRef<Set<keyof OwnershipInterest>>(new Set());
   
-  // Outside Basis state
-  const [outsideBasis, setOutsideBasis] = useState<OutsideBasis | null>(null);
-  const basisDataRef = useRef<Partial<OutsideBasis>>({});
-  const basisPendingRef = useRef<Set<keyof OutsideBasis>>(new Set());
+  // Key to force BasisWalk refresh when inception changes
+  const [basisWalkKey, setBasisWalkKey] = useState(0);
   
   // Loss Limitations state
   const [lossLimitation, setLossLimitation] = useState<LossLimitation | null>(null);
@@ -56,7 +56,6 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
 
   useEffect(() => {
     if (interest) {
-      loadBasis();
       loadLosses();
       loadCarryforwards();
     }
@@ -83,16 +82,6 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
     }
   };
 
-  const loadBasis = async () => {
-    try {
-      const data = await fetchWrapper.get(`/api/ownership-interests/${interestId}/basis/${taxYear}`);
-      setOutsideBasis(data);
-      basisDataRef.current = { ...data };
-    } catch (error) {
-      console.error('Failed to load outside basis:', error);
-    }
-  };
-
   const loadLosses = async () => {
     try {
       const data = await fetchWrapper.get(`/api/ownership-interests/${interestId}/losses/${taxYear}`);
@@ -111,29 +100,6 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
       console.error('Failed to load carryforwards:', error);
     }
   };
-
-  // Basis field handlers
-  const handleBasisChange = useCallback((field: keyof OutsideBasis, value: any) => {
-    basisDataRef.current = { ...basisDataRef.current, [field]: value };
-    basisPendingRef.current.add(field);
-  }, []);
-
-  const saveBasisField = useCallback(async (field: keyof OutsideBasis) => {
-    if (!basisPendingRef.current.has(field)) return;
-
-    setSaveStatus('saving');
-    try {
-      const payload = { [field]: basisDataRef.current[field] };
-      const updated = await fetchWrapper.put(`/api/ownership-interests/${interestId}/basis/${taxYear}`, payload);
-      basisDataRef.current = { ...updated };
-      basisPendingRef.current.delete(field);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (error) {
-      console.error('Failed to save:', error);
-      setSaveStatus('error');
-    }
-  }, [interestId, taxYear]);
 
   // Loss field handlers
   const handleLossChange = useCallback((field: keyof LossLimitation, value: any) => {
@@ -170,58 +136,22 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
     setSaveStatus('saving');
     try {
       const payload = { [field]: inceptionDataRef.current[field] };
+
       const updated = await fetchWrapper.put(`/api/ownership-interests/${interestId}`, payload);
       setInterest(updated);
       inceptionDataRef.current = { ...inceptionDataRef.current, ...payload };
       inceptionPendingRef.current.delete(field);
       setSaveStatus('saved');
+      // Trigger BasisWalk refresh when inception values change
+      if (field === 'inception_basis_year' || field === 'inception_basis_total') {
+        setBasisWalkKey(prev => prev + 1);
+      }
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Failed to save:', error);
       setSaveStatus('error');
     }
   }, [interestId]);
-
-  // Adjustments
-  const addAdjustment = async (category: 'increase' | 'decrease') => {
-    try {
-      const newAdj = await fetchWrapper.post(`/api/ownership-interests/${interestId}/basis/${taxYear}/adjustments`, {
-        adjustment_category: category,
-      });
-      setOutsideBasis(prev => prev ? {
-        ...prev,
-        adjustments: [...(prev.adjustments || []), newAdj],
-      } : prev);
-    } catch (error) {
-      console.error('Failed to add adjustment:', error);
-    }
-  };
-
-  const updateAdjustment = async (id: number, field: string, value: any) => {
-    try {
-      const updated = await fetchWrapper.put(`/api/adjustments/${id}`, {
-        [field]: value,
-      });
-      setOutsideBasis(prev => prev ? {
-        ...prev,
-        adjustments: (prev.adjustments || []).map(adj => adj.id === id ? updated : adj),
-      } : prev);
-    } catch (error) {
-      console.error('Failed to update adjustment:', error);
-    }
-  };
-
-  const deleteAdjustment = async (id: number) => {
-    try {
-      await fetchWrapper.delete(`/api/adjustments/${id}`, {});
-      setOutsideBasis(prev => prev ? {
-        ...prev,
-        adjustments: (prev.adjustments || []).filter(adj => adj.id !== id),
-      } : prev);
-    } catch (error) {
-      console.error('Failed to delete adjustment:', error);
-    }
-  };
 
   // Carryforwards
   const addCarryforward = async () => {
@@ -278,9 +208,6 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
     );
   }
 
-  const increases = outsideBasis?.adjustments?.filter(a => a.adjustment_category === 'increase') || [];
-  const decreases = outsideBasis?.adjustments?.filter(a => a.adjustment_category === 'decrease') || [];
-
   // Generate year options (current year -10 to current year, but not before inception_basis_year)
   const currentYear = new Date().getFullYear();
   const inceptionYear = interest?.inception_basis_year ?? null;
@@ -327,211 +254,112 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
             <p className="text-sm text-red-600 dark:text-red-400 mt-1">Failed to save</p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-sm text-muted-foreground">Tax Year:</Label>
-          <Select value={taxYear.toString()} onValueChange={(v) => setTaxYear(parseInt(v))}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {yearOptions.map(year => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       {/* Inception Basis Card - Outside of Tabs since it's a one-time value */}
       <Card>
-        <CardHeader>
-          <CardTitle>Inception Basis</CardTitle>
-          <CardDescription>How the partnership interest was originally acquired (one-time acquisition values)</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Inception Basis</CardTitle>
+            <CardDescription>How the partnership interest was originally acquired (one-time acquisition values)</CardDescription>
+          </div>
+          <InceptionBasisModal
+            interest={interest}
+            onSave={async (data) => {
+              const updated = await fetchWrapper.put(`/api/ownership-interests/${interestId}`, data);
+              setInterest(updated);
+            }}
+            onSaved={() => setBasisWalkKey(prev => prev + 1)}
+          />
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="grid gap-2">
-              <Label>Inception Year</Label>
-              <Input
-                type="number"
-                placeholder="e.g., 2020"
-                defaultValue={interest.inception_basis_year ?? ''}
-                onChange={(e) => handleInceptionChange('inception_basis_year', e.target.value ? parseInt(e.target.value) : null)}
-                onBlur={() => saveInceptionField('inception_basis_year')}
-              />
+          {interest.inception_date || interest.inception_basis_year ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Inception Date</Label>
+                <p className="font-medium">
+                  {interest.inception_date 
+                    ? new Date(interest.inception_date).toLocaleDateString()
+                    : interest.inception_basis_year 
+                      ? `${interest.inception_basis_year}` 
+                      : '—'}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Method</Label>
+                <p className="font-medium capitalize">
+                  {interest.method_of_acquisition?.replace('_', ' ') ?? '—'}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Basis Source</Label>
+                <p className="font-mono">
+                  {interest.method_of_acquisition === 'purchase' && interest.purchase_price
+                    ? `Purchase: ${formatCurrency(parseFloat(interest.purchase_price))}`
+                    : interest.method_of_acquisition === 'gift' && interest.gift_donor_basis
+                    ? `Gift Basis: ${formatCurrency(parseFloat(interest.gift_donor_basis))}`
+                    : interest.method_of_acquisition === 'inheritance' && interest.cost_basis_inherited
+                    ? `Inherited: ${formatCurrency(parseFloat(interest.cost_basis_inherited))}`
+                    : interest.method_of_acquisition === 'compensation' && interest.taxable_compensation
+                    ? `Comp: ${formatCurrency(parseFloat(interest.taxable_compensation))}`
+                    : interest.method_of_acquisition === 'contribution' && interest.contributed_cash_property
+                    ? `Contrib: ${formatCurrency(parseFloat(interest.contributed_cash_property))}`
+                    : '—'}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Total Inception Basis</Label>
+                <p className="font-mono text-lg font-semibold">
+                  {interest.inception_basis_total 
+                    ? formatCurrency(parseFloat(interest.inception_basis_total))
+                    : '—'}
+                </p>
+              </div>
             </div>
-            <MoneyInput
-              label="Contributed Cash/Property"
-              value={interest.contributed_cash_property}
-              onChange={(v) => handleInceptionChange('contributed_cash_property', v || null)}
-              onBlur={() => saveInceptionField('contributed_cash_property')}
-            />
-            <MoneyInput
-              label="Purchase Price"
-              value={interest.purchase_price}
-              onChange={(v) => handleInceptionChange('purchase_price', v || null)}
-              onBlur={() => saveInceptionField('purchase_price')}
-            />
-            <MoneyInput
-              label="Gift/Inheritance"
-              value={interest.gift_inheritance}
-              onChange={(v) => handleInceptionChange('gift_inheritance', v || null)}
-              onBlur={() => saveInceptionField('gift_inheritance')}
-            />
-            <MoneyInput
-              label="Taxable Compensation"
-              value={interest.taxable_compensation}
-              onChange={(v) => handleInceptionChange('taxable_compensation', v || null)}
-              onBlur={() => saveInceptionField('taxable_compensation')}
-            />
-            <MoneyInput
-              label="Inception Basis Total"
-              value={interest.inception_basis_total}
-              onChange={(v) => handleInceptionChange('inception_basis_total', v || null)}
-              onBlur={() => saveInceptionField('inception_basis_total')}
-            />
-          </div>
+          ) : (
+            <div className="text-center py-4 text-muted-foreground">
+              <p>No inception basis information recorded yet.</p>
+              <p className="text-sm">Click "Edit Inception Basis" to add details about how this interest was acquired.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Tabs */}
       <Tabs defaultValue="basis" className="space-y-4">
         <TabsList className="grid grid-cols-3 w-full max-w-md">
-          <TabsTrigger value="basis">Outside Basis</TabsTrigger>
+          <TabsTrigger value="basis">Basis Walk</TabsTrigger>
           <TabsTrigger value="losses">Loss Limitations</TabsTrigger>
           <TabsTrigger value="carryforwards">Carryforwards</TabsTrigger>
         </TabsList>
 
-        {/* Outside Basis Tab */}
+        {/* Basis Walk Tab */}
         <TabsContent value="basis">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Year Basis ({taxYear})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <MoneyInput
-                    label="Beginning Outside Basis"
-                    value={outsideBasis?.beginning_ob}
-                    onChange={(v) => handleBasisChange('beginning_ob', v || null)}
-                    onBlur={() => saveBasisField('beginning_ob')}
-                  />
-                  <MoneyInput
-                    label="Ending Outside Basis"
-                    value={outsideBasis?.ending_ob}
-                    onChange={(v) => handleBasisChange('ending_ob', v || null)}
-                    onBlur={() => saveBasisField('ending_ob')}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Basis Increases */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Basis Increases</CardTitle>
-                  <CardDescription>Items that increase your outside basis</CardDescription>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => addAdjustment('increase')}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Increase
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {increases.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No basis increases recorded</p>
-                ) : (
-                  <div className="space-y-3">
-                    {increases.map((adj) => (
-                      <div key={adj.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                        <Input
-                          className="flex-1"
-                          placeholder="Description"
-                          defaultValue={adj.adjustment_type ?? ''}
-                          onBlur={(e) => updateAdjustment(adj.id, 'adjustment_type', e.target.value)}
-                        />
-                        <Input
-                          type="number"
-                          step="0.01"
-                          className="w-32 font-mono"
-                          placeholder="Amount"
-                          defaultValue={adj.amount ?? ''}
-                          onBlur={(e) => updateAdjustment(adj.id, 'amount', e.target.value || null)}
-                        />
-                        <Button variant="ghost" size="icon" onClick={() => deleteAdjustment(adj.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Basis Decreases */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Basis Decreases</CardTitle>
-                  <CardDescription>Items that decrease your outside basis</CardDescription>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => addAdjustment('decrease')}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Decrease
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {decreases.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No basis decreases recorded</p>
-                ) : (
-                  <div className="space-y-3">
-                    {decreases.map((adj) => (
-                      <div key={adj.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                        <Input
-                          className="flex-1"
-                          placeholder="Description"
-                          defaultValue={adj.adjustment_type ?? ''}
-                          onBlur={(e) => updateAdjustment(adj.id, 'adjustment_type', e.target.value)}
-                        />
-                        <Input
-                          type="number"
-                          step="0.01"
-                          className="w-32 font-mono"
-                          placeholder="Amount"
-                          defaultValue={adj.amount ?? ''}
-                          onBlur={(e) => updateAdjustment(adj.id, 'amount', e.target.value || null)}
-                        />
-                        <Button variant="ghost" size="icon" onClick={() => deleteAdjustment(adj.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Notes */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  defaultValue={outsideBasis?.notes ?? ''}
-                  onChange={(e) => handleBasisChange('notes', e.target.value || null)}
-                  onBlur={() => saveBasisField('notes')}
-                  placeholder="Add notes about outside basis..."
-                  rows={3}
-                />
-              </CardContent>
-            </Card>
-          </div>
+          <BasisWalk 
+            key={basisWalkKey}
+            interestId={interestId}
+            inceptionYear={interest.inception_basis_year}
+            inceptionBasis={interest.inception_basis_total}
+            onInceptionChange={() => setBasisWalkKey(prev => prev + 1)}
+          />
         </TabsContent>
 
         {/* Loss Limitations Tab */}
         <TabsContent value="losses">
           <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Label className="text-sm text-muted-foreground">Tax Year:</Label>
+              <Select value={taxYear.toString()} onValueChange={(v) => setTaxYear(parseInt(v))}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearOptions.map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Card>
               <CardHeader>
                 <CardTitle>At-Risk Limitations (Form 6198)</CardTitle>
@@ -591,6 +419,9 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
             <Card>
               <CardHeader>
                 <CardTitle>Excess Business Loss (Section 461(l))</CardTitle>
+                <CardDescription>
+                  EBL carryover from year N becomes NOL in year N+1 (per Form 461)
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
@@ -601,10 +432,41 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
                     onBlur={() => saveLossField('excess_business_loss')}
                   />
                   <MoneyInput
-                    label="EBL Carryover"
+                    label="EBL Carryover → NOL Next Year"
                     value={lossLimitation?.excess_business_loss_carryover}
                     onChange={(v) => handleLossChange('excess_business_loss_carryover', v || null)}
                     onBlur={() => saveLossField('excess_business_loss_carryover')}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Net Operating Loss (NOL)</CardTitle>
+                <CardDescription>
+                  Post-2017 NOLs are limited to 80% of taxable income (in years after 2020)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <MoneyInput
+                    label="NOL Deduction Used"
+                    value={lossLimitation?.nol_deduction_used}
+                    onChange={(v) => handleLossChange('nol_deduction_used', v || null)}
+                    onBlur={() => saveLossField('nol_deduction_used')}
+                  />
+                  <MoneyInput
+                    label="NOL Carryforward"
+                    value={lossLimitation?.nol_carryforward}
+                    onChange={(v) => handleLossChange('nol_carryforward', v || null)}
+                    onBlur={() => saveLossField('nol_carryforward')}
+                  />
+                  <MoneyInput
+                    label="80% Limit (if applicable)"
+                    value={lossLimitation?.nol_80_percent_limit}
+                    onChange={(v) => handleLossChange('nol_80_percent_limit', v || null)}
+                    onBlur={() => saveLossField('nol_80_percent_limit')}
                   />
                 </div>
               </CardContent>
@@ -670,17 +532,24 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
                               <SelectItem value="at_risk">At-Risk</SelectItem>
                               <SelectItem value="passive">Passive</SelectItem>
                               <SelectItem value="excess_business_loss">Excess Business Loss</SelectItem>
+                              <SelectItem value="nol">NOL</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="grid gap-1">
                           <Label className="text-xs text-muted-foreground">Character</Label>
-                          <Input
-                            className="w-24"
-                            placeholder="e.g., Ord"
+                          <Select
                             defaultValue={cf.loss_character ?? ''}
-                            onBlur={(e) => updateCarryforward(cf.id, 'loss_character', e.target.value || null)}
-                          />
+                            onValueChange={(v) => updateCarryforward(cf.id, 'loss_character', v || null)}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue placeholder="—" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ORD">ORD</SelectItem>
+                              <SelectItem value="CAP">CAP</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="grid gap-1">
                           <Label className="text-xs text-muted-foreground">Original</Label>
