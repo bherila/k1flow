@@ -1,8 +1,6 @@
 import { createRoot } from 'react-dom/client';
-import OwnershipInterestDetail from './components/k1/OwnershipInterestDetail';
+import OwnershipBasisDetail from './components/k1/OwnershipBasisDetail';
 import React from 'react';
-
-console.log('[OwnershipInterest] Script loaded');
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
   constructor(props: { children: React.ReactNode }) {
@@ -15,7 +13,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[OwnershipInterest] Error caught by boundary:', error, errorInfo);
+    console.error('[OwnershipBasisDetail] Error caught by boundary:', error, errorInfo);
   }
 
   render() {
@@ -32,25 +30,22 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const mount = document.getElementById('ownership-interest-detail');
-console.log('[OwnershipInterest] Mount element:', mount);
+const mount = document.getElementById('ownership-basis-detail');
 
 if (mount) {
   const interestId = parseInt(mount.dataset.interestId || '0', 10);
-  console.log('[OwnershipInterest] Interest ID:', interestId);
+  const year = parseInt(mount.dataset.year || '0', 10);
+  const type = mount.dataset.type as 'increases' | 'decreases';
   
   try {
     const root = createRoot(mount);
     root.render(
       <ErrorBoundary>
-        <OwnershipInterestDetail interestId={interestId} />
+        <OwnershipBasisDetail interestId={interestId} year={year} type={type} />
       </ErrorBoundary>
     );
-    console.log('[OwnershipInterest] Component rendered');
   } catch (error) {
-    console.error('[OwnershipInterest] Render error:', error);
+    console.error('[OwnershipBasisDetail] Render error:', error);
     mount.innerHTML = `<div class="p-8 text-red-600">Error loading page: ${error instanceof Error ? error.message : String(error)}</div>`;
   }
-} else {
-  console.error('[OwnershipInterest] Mount element not found');
 }

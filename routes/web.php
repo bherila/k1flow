@@ -18,6 +18,27 @@ Route::get('/company/{companyId}/k1/{formId}', function ($companyId, $formId) {
 });
 
 // Ownership Interest detail view (includes outside basis and loss limitations)
+
 Route::get('/ownership/{interestId}', function ($interestId) {
+
     return view('ownership-interest', ['interestId' => $interestId]);
+
 });
+
+
+
+// Ownership Basis Drill-down
+
+Route::get('/ownership/{interestId}/basis/{year}/{type}', function ($interestId, $year, $type) {
+
+    return view('ownership-basis-detail', [
+
+        'interestId' => $interestId,
+
+        'year' => $year,
+
+        'type' => $type
+
+    ]);
+
+})->where('type', 'increases|decreases');

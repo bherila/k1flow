@@ -354,15 +354,15 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                     >
                       <HoverCard openDelay={200} closeDelay={100}>
                         <HoverCardTrigger asChild>
-                          <button
-                            className="hover:underline cursor-pointer w-full text-right text-green-600"
-                            onClick={() => setSelectedYear(year)}
+                          <a
+                            href={`/ownership/${interestId}/basis/${year}/increases`}
+                            className="hover:underline cursor-pointer block w-full text-right text-green-600"
                             onMouseEnter={() => loadYearAdjustments(year)}
                           >
                             {yearData && yearData.total_increases > 0 
                               ? formatCurrency(yearData.total_increases) 
                               : '$0.00'}
-                          </button>
+                          </a>
                         </HoverCardTrigger>
                         <HoverCardContent className="w-96" align="start">
                           <div className="space-y-2">
@@ -385,6 +385,9 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                             ) : (
                               <p className="text-sm text-muted-foreground">No increases recorded</p>
                             )}
+                            <div className="pt-2 text-xs text-blue-600 flex items-center">
+                               Click to view details <ChevronRight className="h-3 w-3 ml-1" />
+                            </div>
                           </div>
                         </HoverCardContent>
                       </HoverCard>
@@ -407,15 +410,15 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                     >
                       <HoverCard openDelay={200} closeDelay={100}>
                         <HoverCardTrigger asChild>
-                          <button
-                            className="hover:underline cursor-pointer w-full text-right text-red-600"
-                            onClick={() => setSelectedYear(year)}
+                          <a
+                            href={`/ownership/${interestId}/basis/${year}/decreases`}
+                            className="hover:underline cursor-pointer block w-full text-right text-red-600"
                             onMouseEnter={() => loadYearAdjustments(year)}
                           >
                             {yearData && yearData.total_decreases > 0 
                               ? `-${formatCurrency(yearData.total_decreases)}` 
                               : '$0.00'}
-                          </button>
+                          </a>
                         </HoverCardTrigger>
                         <HoverCardContent className="w-96" align="start">
                           <div className="space-y-2">
@@ -438,6 +441,9 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                             ) : (
                               <p className="text-sm text-muted-foreground">No decreases recorded</p>
                             )}
+                            <div className="pt-2 text-xs text-blue-600 flex items-center">
+                               Click to view details <ChevronRight className="h-3 w-3 ml-1" />
+                            </div>
                           </div>
                         </HoverCardContent>
                       </HoverCard>
