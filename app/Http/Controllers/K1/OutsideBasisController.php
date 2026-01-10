@@ -20,6 +20,25 @@ class OutsideBasisController extends Controller
      */
     public function basisWalk(OwnershipInterest $interest): JsonResponse
     {
+        $data = $this->calculateBasisWalkData($interest);
+
+        return response()->json([
+            'ownership_interest_id' => $interest->id,
+            'inception_year' => $data['inception_year'],
+            'inception_basis' => $data['inception_basis'],
+            'basis_walk' => array_values($data['walk']),
+        ]);
+    }
+
+    /**
+     * Calculate the basis walk data for all years up to current or target year.
+     * 
+     * @param OwnershipInterest $interest
+     * @param int|null $targetYear Ensure calculations extend to at least this year
+     * @return array
+     */
+    private function calculateBasisWalkData(OwnershipInterest $interest, ?int $targetYear = null): array
+    {
         // Get all outside basis records for this interest, ordered by year
         $basisRecords = OutsideBasis::with('adjustments')
             ->where('ownership_interest_id', $interest->id)
@@ -35,11 +54,16 @@ class OutsideBasisController extends Controller
             $inceptionYear = $basisRecords->min('tax_year') ?? ($currentYear - 1);
         }
 
+        $maxYear = max($currentYear, $basisRecords->max('tax_year') ?? $currentYear);
+        if ($targetYear) {
+            $maxYear = max($maxYear, $targetYear);
+        }
+
         $basisWalk = [];
         $priorEndingBasis = null;
 
         // Build basis walk for each year from inception to current
-        for ($year = $inceptionYear; $year <= $currentYear; $year++) {
+        for ($year = $inceptionYear; $year <= $maxYear; $year++) {
             $record = $basisRecords->firstWhere('tax_year', $year);
             
             // Calculate starting basis
@@ -62,7 +86,7 @@ class OutsideBasisController extends Controller
                 ? (float) $record->ending_ob 
                 : ($startingBasis !== null ? $startingBasis + $netAdjustment : null);
 
-            $basisWalk[] = [
+            $basisWalk[$year] = [
                 'tax_year' => $year,
                 'outside_basis_id' => $record?->id,
                 'starting_basis' => $startingBasis,
@@ -72,18 +96,18 @@ class OutsideBasisController extends Controller
                 'ending_basis' => $endingBasis,
                 'has_adjustments' => $adjustments->isNotEmpty(),
                 'adjustments_count' => $adjustments->count(),
+                'record' => $record,
             ];
 
             // Carry forward ending basis for next year
             $priorEndingBasis = $endingBasis;
         }
 
-        return response()->json([
-            'ownership_interest_id' => $interest->id,
+        return [
             'inception_year' => $inceptionYear,
             'inception_basis' => $interest->inception_basis_total,
-            'basis_walk' => $basisWalk,
-        ]);
+            'walk' => $basisWalk,
+        ];
     }
 
     /**
@@ -114,29 +138,17 @@ class OutsideBasisController extends Controller
                 ]
             );
 
-        // Calculate starting basis from prior year's ending basis
-        $priorYear = OutsideBasis::where('ownership_interest_id', $interest->id)
-            ->where('tax_year', $taxYear - 1)
-            ->first();
-        
-        $startingBasis = null;
-        if ($priorYear && $priorYear->ending_ob !== null) {
-            $startingBasis = (float) $priorYear->ending_ob;
-        } elseif ($interest->inception_basis_year === $taxYear && $interest->inception_basis_total !== null) {
-            $startingBasis = (float) $interest->inception_basis_total;
-        }
-
-        // Sum adjustments
-        $adjustments = $basis->adjustments ?? collect([]);
-        $totalIncreases = $adjustments->where('adjustment_category', 'increase')->sum('amount');
-        $totalDecreases = $adjustments->where('adjustment_category', 'decrease')->sum('amount');
+        // Calculate basis walk to get correct starting and ending basis
+        $walkData = $this->calculateBasisWalkData($interest, $taxYear);
+        $yearData = $walkData['walk'][$taxYear] ?? null;
 
         return response()->json([
             ...$basis->toArray(),
-            'starting_basis' => $startingBasis,
-            'total_increases' => $totalIncreases,
-            'total_decreases' => $totalDecreases,
-            'net_adjustment' => $totalIncreases - $totalDecreases,
+            'starting_basis' => $yearData['starting_basis'] ?? null,
+            'total_increases' => $yearData['total_increases'] ?? 0,
+            'total_decreases' => $yearData['total_decreases'] ?? 0,
+            'net_adjustment' => $yearData['net_adjustment'] ?? 0,
+            'ending_basis' => $yearData['ending_basis'] ?? null,
         ]);
     }
 

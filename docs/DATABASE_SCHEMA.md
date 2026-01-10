@@ -109,7 +109,7 @@ Tracks partner's outside basis in the partnership interest, now linked to owners
 | ownership_interest_id | bigint | FK to ownership_interests |
 | tax_year | int | Tax year this basis record applies to |
 | beginning_ob | decimal(16,2) | Beginning of year OB (auto-calculated from prior year) |
-| ending_ob | decimal(16,2) | End of year OB |
+| ending_ob | decimal(16,2) | Manual override for End of year OB (if null, calculated dynamically) |
 | notes | text | Additional notes |
 
 ### k1_ob_adjustments → ob_adjustments
@@ -272,6 +272,7 @@ The Basis Walk provides a year-over-year view of outside basis tracking:
    - Columns: Tax Year, Starting Basis, Adjustments, Ending Basis
    - Starting basis = prior year's ending basis (or inception basis for first year)
    - Adjustments = sum of increases minus decreases
+   - Ending basis = Starting basis + Adjustments (unless manually overridden)
 
 3. **Yearly Adjustment Entry**
    - User clicks on adjustments column to view/edit details
