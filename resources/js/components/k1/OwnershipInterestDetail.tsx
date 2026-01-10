@@ -25,6 +25,8 @@ interface Props {
 }
 
 export default function OwnershipInterestDetail({ interestId }: Props) {
+  console.log('[OwnershipInterestDetail] Component mounting with interestId:', interestId);
+  
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
   const [ownerCompany, setOwnerCompany] = useState<K1Company | null>(null);
   const [ownedCompany, setOwnedCompany] = useState<K1Company | null>(null);
@@ -62,8 +64,10 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
   }, [interest, taxYear]);
 
   const loadInterest = async () => {
+    console.log('[OwnershipInterestDetail] Loading interest data...');
     try {
       const data = await fetchWrapper.get(`/api/ownership-interests/${interestId}`);
+      console.log('[OwnershipInterestDetail] Interest data loaded:', data);
       setInterest(data);
       setOwnerCompany(data.owner_company);
       setOwnedCompany(data.owned_company);
@@ -78,6 +82,7 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
     } catch (error) {
       console.error('Failed to load ownership interest:', error);
     } finally {
+      console.log('[OwnershipInterestDetail] Setting loading to false');
       setLoading(false);
     }
   };
@@ -189,6 +194,7 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
   };
 
   if (loading) {
+    console.log('[OwnershipInterestDetail] Rendering loading state');
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
@@ -197,6 +203,7 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
   }
 
   if (!interest || !ownedCompany) {
+    console.log('[OwnershipInterestDetail] No interest or ownedCompany, showing error');
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold">Ownership interest not found</h2>

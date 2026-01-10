@@ -256,19 +256,11 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
     );
   }
 
-  if (!inceptionYear || inceptionBasis === null) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground mb-4">
-            Please set the inception date and basis above to start tracking your basis walk.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  // Default to current year if no inception year is set
   const currentYear = new Date().getFullYear();
+  const effectiveInceptionYear = inceptionYear || currentYear;
+  const effectiveInceptionBasis = inceptionBasis ?? '0';
+  
   const years = basisWalk.map(y => y.tax_year);
   const increases = yearDetail?.adjustments?.filter(a => a.adjustment_category === 'increase') || [];
   const decreases = yearDetail?.adjustments?.filter(a => a.adjustment_category === 'decrease') || [];
@@ -290,7 +282,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                 <TableHead className="w-32 sticky left-0 bg-background"></TableHead>
                 <TableHead className="text-center font-semibold border-r">
                   <div className="text-xs text-muted-foreground">Inception Year</div>
-                  <div>{inceptionYear}</div>
+                  <div>{effectiveInceptionYear}</div>
                 </TableHead>
                 {years.slice(1).map((year, idx) => (
                   <TableHead key={year} className={`text-center ${idx === years.length - 2 ? '' : ''}`}>
@@ -322,7 +314,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                             onMouseEnter={() => loadYearAdjustments(year)}
                           >
                             {isInception 
-                              ? formatCurrency(parseFloat(inceptionBasis || '0'))
+                              ? formatCurrency(parseFloat(effectiveInceptionBasis))
                               : yearData?.starting_basis !== null && yearData?.starting_basis !== undefined
                                 ? formatCurrency(yearData.starting_basis) 
                                 : '—'}
@@ -483,7 +475,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                           <div className="space-y-2">
                             <h4 className="font-semibold">{year} Ending Basis</h4>
                             <p className="text-sm">
-                              Beginning: {yearData?.starting_basis !== null ? formatCurrency(yearData?.starting_basis ?? 0) : formatCurrency(parseFloat(inceptionBasis || '0'))}
+                              Beginning: {yearData?.starting_basis !== null ? formatCurrency(yearData?.starting_basis ?? 0) : formatCurrency(parseFloat(effectiveInceptionBasis))}
                             </p>
                             <p className="text-sm text-green-600">
                               + Increases: {formatCurrency(yearData?.total_increases ?? 0)}
