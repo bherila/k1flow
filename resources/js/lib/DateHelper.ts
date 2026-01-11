@@ -18,6 +18,30 @@ export class DateContainer {
   }
 }
 
+/**
+ * Converts a date string to YYYY-MM-DD format suitable for HTML input[type=date].
+ * Handles various formats including "YYYY-MM-DD HH:mm:ss" from Laravel.
+ */
+export class DateHelper {
+  static toInputDate(value: string | null | undefined): string {
+    if (!value) return '';
+    // If already in YYYY-MM-DD format, return as-is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+    // Handle "YYYY-MM-DD HH:mm:ss" format from Laravel
+    const match = value.match(/^(\d{4}-\d{2}-\d{2})/)
+    if (match && match[1]) {
+      return match[1]
+    }
+    // Try parsing with dayjs as fallback
+    const parsed = parseDate(value)
+    if (!parsed) return ''
+    const result = parsed.formatYMD()
+    return result !== null ? result : ''
+  }
+}
+
 export function parseDate(str: string | undefined | null | Date): DateContainer | null {
   if (!str) {
     return null

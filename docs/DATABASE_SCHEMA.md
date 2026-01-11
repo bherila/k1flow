@@ -257,6 +257,37 @@ All monetary amounts use `DECIMAL(16,2)` for precision:
 - Supports values up to $99,999,999,999,999.99
 - Negative values allowed for losses
 
+## Date Handling Convention
+
+### Backend to Frontend Date Serialization
+
+Laravel models use the `SerializesDatesAsLocal` trait which serializes dates in `YYYY-MM-DD HH:mm:ss` format (e.g., `"2024-01-15 00:00:00"`). This avoids timezone shifting issues in JavaScript.
+
+### HTML Date Input Compatibility
+
+HTML `<input type="date">` elements require dates in strict `YYYY-MM-DD` format. When populating date inputs from API data, use `DateHelper.toInputDate()` to convert:
+
+```typescript
+import { DateHelper } from '@/lib/DateHelper';
+
+// In a React component:
+const [date, setDate] = useState('');
+
+useEffect(() => {
+  // Convert Laravel datetime to input format
+  setDate(DateHelper.toInputDate(apiData.inception_date));
+}, [apiData]);
+```
+
+**Supported Input Formats:**
+- `YYYY-MM-DD` (returned as-is)
+- `YYYY-MM-DD HH:mm:ss` (Laravel default)
+- `YYYY-MM-DD HH:mm:ss.SSS` (with milliseconds)
+- `YYYY-MM-DDTHH:mm:ss` (ISO 8601)
+- Various other formats via `parseDate()` fallback
+
+**Unit Tests:** See `tests-ts/DateHelper.test.ts` for comprehensive test coverage.
+
 ## Basis Walk Feature
 
 The Basis Walk provides a year-over-year view of outside basis tracking:

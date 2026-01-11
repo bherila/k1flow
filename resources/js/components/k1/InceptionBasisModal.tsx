@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import type { OwnershipInterest, MethodOfAcquisition } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
+import { DateHelper } from '@/lib/DateHelper';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -89,13 +90,14 @@ export default function InceptionBasisModal({ interest, onSave, onSaved }: Props
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      setInceptionDate(interest.inception_date ?? '');
+      // Use DateHelper to convert date strings to YYYY-MM-DD format for input[type=date]
+      setInceptionDate(DateHelper.toInputDate(interest.inception_date));
       setMethod(interest.method_of_acquisition ?? 'purchase');
       setPurchasePrice(interest.purchase_price ?? '');
-      setGiftDate(interest.gift_date ?? '');
+      setGiftDate(DateHelper.toInputDate(interest.gift_date));
       setGiftDonorBasis(interest.gift_donor_basis ?? '');
       setGiftFmv(interest.gift_fmv_at_transfer ?? '');
-      setInheritanceDate(interest.inheritance_date ?? '');
+      setInheritanceDate(DateHelper.toInputDate(interest.inheritance_date));
       setCostBasisInherited(interest.cost_basis_inherited ?? '');
       setTaxableCompensation(interest.taxable_compensation ?? '');
       setContributedCashProperty(interest.contributed_cash_property ?? '');

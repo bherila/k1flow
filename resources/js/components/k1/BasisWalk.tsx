@@ -186,7 +186,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                                 Carried forward from {year - 1} ending basis
                               </p>
                             )}
-                            <div className="pt-2 text-xs text-blue-600 flex items-center">
+                            <div className="pt-2 text-xs text-blue-600 dark:text-blue-400 flex items-center">
                                Click to view details <ChevronRight className="h-3 w-3 ml-1" />
                             </div>
                           </div>
@@ -213,7 +213,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                         <HoverCardTrigger asChild>
                           <a
                             href={`/ownership/${interestId}/basis/${year}/adjustments`}
-                            className="hover:underline cursor-pointer block w-full text-right text-green-600"
+                            className="hover:underline cursor-pointer block w-full text-right text-green-600 dark:text-green-400"
                             onMouseEnter={() => loadYearAdjustments(year)}
                           >
                             {yearData && yearData.total_increases > 0 
@@ -223,7 +223,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                         </HoverCardTrigger>
                         <HoverCardContent className="w-96" align="start">
                           <div className="space-y-2">
-                            <h4 className="font-semibold text-green-700">{year} Increases</h4>
+                            <h4 className="font-semibold text-green-700 dark:text-green-400">{year} Increases</h4>
                             {cachedAdj?.increases && cachedAdj.increases.length > 0 ? (
                               <Table>
                                 <TableBody>
@@ -242,7 +242,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                             ) : (
                               <p className="text-sm text-muted-foreground">No increases recorded</p>
                             )}
-                            <div className="pt-2 text-xs text-blue-600 flex items-center">
+                            <div className="pt-2 text-xs text-blue-600 dark:text-blue-400 flex items-center">
                                Click to view details <ChevronRight className="h-3 w-3 ml-1" />
                             </div>
                           </div>
@@ -269,7 +269,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                         <HoverCardTrigger asChild>
                           <a
                             href={`/ownership/${interestId}/basis/${year}/adjustments`}
-                            className="hover:underline cursor-pointer block w-full text-right text-red-600"
+                            className="hover:underline cursor-pointer block w-full text-right text-red-600 dark:text-red-400"
                             onMouseEnter={() => loadYearAdjustments(year)}
                           >
                             {yearData && yearData.total_decreases > 0 
@@ -279,7 +279,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                         </HoverCardTrigger>
                         <HoverCardContent className="w-96" align="start">
                           <div className="space-y-2">
-                            <h4 className="font-semibold text-red-700">{year} Decreases</h4>
+                            <h4 className="font-semibold text-red-700 dark:text-red-400">{year} Decreases</h4>
                             {cachedAdj?.decreases && cachedAdj.decreases.length > 0 ? (
                               <Table>
                                 <TableBody>
@@ -298,7 +298,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                             ) : (
                               <p className="text-sm text-muted-foreground">No decreases recorded</p>
                             )}
-                            <div className="pt-2 text-xs text-blue-600 flex items-center">
+                            <div className="pt-2 text-xs text-blue-600 dark:text-blue-400 flex items-center">
                                Click to view details <ChevronRight className="h-3 w-3 ml-1" />
                             </div>
                           </div>
@@ -331,7 +331,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                               <AlertCircle className="h-3 w-3 text-amber-500 cursor-help" />
                             </HoverCardTrigger>
                             <HoverCardContent className="w-auto p-2">
-                              <p className="text-xs font-medium text-amber-700">Override</p>
+                              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Override</p>
                             </HoverCardContent>
                           </HoverCard>
                         )}
@@ -352,22 +352,22 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
                               <p className="text-sm">
                                 Beginning: {yearData?.starting_basis !== null ? formatCurrency(yearData?.starting_basis ?? 0) : formatCurrency(parseFloat(effectiveInceptionBasis))}
                               </p>
-                              <p className="text-sm text-green-600">
+                              <p className="text-sm text-green-600 dark:text-green-400">
                                 + Increases: {formatCurrency(yearData?.total_increases ?? 0)}
                               </p>
-                              <p className="text-sm text-red-600">
+                              <p className="text-sm text-red-600 dark:text-red-400">
                                 - Decreases: {formatCurrency(yearData?.total_decreases ?? 0)}
                               </p>
                               <p className="text-sm font-semibold border-t pt-2 flex items-center justify-between">
                                 <span>= Ending: {yearData?.ending_basis !== null && yearData?.ending_basis !== undefined ? formatCurrency(yearData.ending_basis) : '—'}</span>
-                                {isOverride && <span className="text-xs text-amber-600 font-normal px-1.5 py-0.5 bg-amber-100 rounded ml-2">Override</span>}
+                                {isOverride && <span className="text-xs text-amber-600 dark:text-amber-400 font-normal px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/50 rounded ml-2">Override</span>}
                               </p>
                               {nextYearData && (
                                 <p className="text-xs text-muted-foreground mt-2">
                                   → Carries forward to {nextYear} as beginning basis
                                 </p>
                               )}
-                              <div className="pt-2 text-xs text-blue-600 flex items-center">
+                              <div className="pt-2 text-xs text-blue-600 dark:text-blue-400 flex items-center">
                                  Click to view details <ChevronRight className="h-3 w-3 ml-1" />
                               </div>
                             </div>
@@ -388,7 +388,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Info className="h-4 w-4" />
-            Year-to-Year Carryover
+            Year-to-Year Carryover of Basis
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -406,28 +406,33 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
               const isOverride = yearData?.record?.ending_ob !== null && yearData?.record?.ending_ob !== undefined;
               
               return (
-                <div key={year} className={`p-3 rounded-lg border ${matches ? 'bg-green-50 dark:bg-green-950 border-green-200' : 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200'}`}>
+                <div
+                  key={year}
+                  className={`p-3 rounded-lg border ${matches ? 'bg-green-100 border-green-700 text-green-950 dark:bg-green-900/20 dark:border-green-700 dark:text-green-100' : 'bg-yellow-100 border-yellow-700 text-yellow-950 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-100'}`}
+                >
                   <div className="font-medium">{year} → {nextYear}</div>
-                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    Ending: {carryover !== null ? formatCurrency(carryover) : '—'}
+                  <div className="text-xs mt-1 flex items-center gap-1">
+                    <span className="opacity-80">Ending:</span>
+                    <span className="font-mono">{carryover !== null ? formatCurrency(carryover) : '—'}</span>
                     {isOverride && (
                       <HoverCard openDelay={200} closeDelay={100}>
                         <HoverCardTrigger>
                           <AlertCircle className="h-3 w-3 text-amber-500 cursor-help" />
                         </HoverCardTrigger>
                         <HoverCardContent className="w-auto p-2">
-                          <p className="text-xs font-medium text-amber-700">Override</p>
+                          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Override</p>
                         </HoverCardContent>
                       </HoverCard>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    Next Beginning: {nextBeginning !== null ? formatCurrency(nextBeginning) : '—'}
+                  <div className="text-xs mt-1">
+                    <span className="opacity-80">Next Beginning:</span>{' '}
+                    <span className="font-mono">{nextBeginning !== null ? formatCurrency(nextBeginning) : '—'}</span>
                   </div>
                   {matches ? (
-                    <div className="text-xs text-green-600 mt-1">✓ Matches</div>
+                    <div className="text-xs mt-1 font-semibold">✓ Matches</div>
                   ) : (
-                    <div className="text-xs text-yellow-600 mt-1">⚠ Check values</div>
+                    <div className="text-xs mt-1 font-semibold">⚠ Check values</div>
                   )}
                 </div>
               );
