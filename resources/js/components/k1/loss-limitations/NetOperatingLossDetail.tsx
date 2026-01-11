@@ -111,7 +111,7 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">
-                  EBL Carryover → NOL
+                  EBL carried-over as NOL
                 </Label>
                 <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
                   {priorYearData.excess_business_loss_carryover ? formatCurrency(priorYearData.excess_business_loss_carryover) : '—'}

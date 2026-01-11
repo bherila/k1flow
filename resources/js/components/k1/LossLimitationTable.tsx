@@ -75,7 +75,7 @@ export default function LossLimitationTable({ interestId, basisWalk }: Props) {
                 </TableCell>
             </TableRow>
             {renderRow('Excess Business Loss', 'excess_business_loss', 'excess-business-loss')}
-            {renderRow('EBL Carryover → NOL', 'excess_business_loss_carryover', 'excess-business-loss')}
+            {renderRow('EBL carried-over as NOL', 'excess_business_loss_carryover', 'excess-business-loss')}
 
              {/* NOL */}
              <TableRow className="bg-muted/20 hover:bg-muted/20">
