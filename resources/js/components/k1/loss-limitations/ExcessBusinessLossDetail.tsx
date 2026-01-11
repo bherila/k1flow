@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Loader2, ArrowRight, ArrowLeft, Copy } from 'lucide-react';
+import { ChevronLeft, Loader2, ArrowRight, ArrowLeft, Copy, Save } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 import { LossLimitationTabs } from '../LossLimitationTabs';
 import Form461Worksheet from './Form461Worksheet';
@@ -19,12 +19,18 @@ interface Props {
 export default function ExcessBusinessLossDetail({ interestId, year }: Props) {
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
   const [priorYearData, setPriorYearData] = useState<LossLimitation | null>(null);
+  const [data, setData] = useState<LossLimitation | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     excess_business_loss: '',
     excess_business_loss_carryover: '',
   });
+
+  const isDirty = data ? (
+    formData.excess_business_loss !== (data.excess_business_loss || '') ||
+    formData.excess_business_loss_carryover !== (data.excess_business_loss_carryover || '')
+  ) : false;
 
   useEffect(() => {
     loadData();
@@ -38,6 +44,7 @@ export default function ExcessBusinessLossDetail({ interestId, year }: Props) {
         fetchWrapper.get(`/api/ownership-interests/${interestId}/losses/${year - 1}`).catch(() => null)
       ]);
       setInterest(interestData);
+      setData(lossData);
       setPriorYearData(priorLossData);
       setFormData({
         excess_business_loss: lossData.excess_business_loss || '',
@@ -161,20 +168,21 @@ export default function ExcessBusinessLossDetail({ interestId, year }: Props) {
               <p className="text-xs text-muted-foreground">
                 This amount is treated as a Net Operating Loss (NOL) in {year + 1}
               </p>
-              <div className="pt-1">
-                <a 
-                  href={`/ownership/${interestId}/net-operating-loss/${year + 1}`}
-                  className="text-sm text-primary hover:underline flex items-center gap-1 w-fit"
-                >
-                  Go to {year + 1} Net Operating Loss
-                  <ArrowRight className="h-4 w-4" />
-                </a>
-              </div>
             </div>
 
-            <div className="pt-4 flex justify-end">
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <div className="pt-4 flex justify-between items-center">
+              <Button 
+                type="button"
+                variant="outline"
+                className="gap-2"
+                onClick={() => window.location.href = `/ownership/${interestId}/net-operating-loss/${year + 1}`}
+              >
+                Go to {year + 1} Net Operating Loss
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+
+              <Button type="submit" disabled={saving || !isDirty} className="gap-2">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 Save Changes
               </Button>
             </div>
