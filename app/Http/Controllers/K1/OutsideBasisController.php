@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\K1\OwnershipInterest;
 use App\Models\K1\OutsideBasis;
 use App\Models\K1\ObAdjustment;
+use App\Models\K1\LossLimitation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -45,6 +46,10 @@ class OutsideBasisController extends Controller
             ->orderBy('tax_year')
             ->get();
 
+        // Get all loss limitations
+        $lossLimitations = LossLimitation::where('ownership_interest_id', $interest->id)
+            ->get();
+
         // Determine year range
         $inceptionYear = $interest->inception_basis_year;
         $currentYear = (int) date('Y');
@@ -65,6 +70,7 @@ class OutsideBasisController extends Controller
         // Build basis walk for each year from inception to current
         for ($year = $inceptionYear; $year <= $maxYear; $year++) {
             $record = $basisRecords->firstWhere('tax_year', $year);
+            $lossLimitation = $lossLimitations->firstWhere('tax_year', $year);
             
             // Calculate starting basis
             $startingBasis = $priorEndingBasis;
@@ -97,6 +103,7 @@ class OutsideBasisController extends Controller
                 'has_adjustments' => $adjustments->isNotEmpty(),
                 'adjustments_count' => $adjustments->count(),
                 'record' => $record,
+                'loss_limitation' => $lossLimitation,
             ];
 
             // Carry forward ending basis for next year

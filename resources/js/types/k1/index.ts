@@ -258,6 +258,7 @@ export interface BasisWalkYear {
   has_adjustments: boolean;
   adjustments_count: number;
   record?: OutsideBasis | null;
+  loss_limitation?: LossLimitation | null;
 }
 
 export interface BasisWalkResponse {

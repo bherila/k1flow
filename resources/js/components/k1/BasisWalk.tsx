@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Info } from 'lucide-react';
 import BasisTable from './BasisTable';
 import CarryoverSummary from './CarryoverSummary';
+import LossLimitationTable from './LossLimitationTable';
 
 // Local copies of the labels
 const INCREASE_LABELS: Record<string, string> = {
@@ -124,6 +125,22 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
             loadYearAdjustments={loadYearAdjustments}
             effectiveInceptionYear={effectiveInceptionYear}
             effectiveInceptionBasis={effectiveInceptionBasis}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Loss Limitations</CardTitle>
+          <CardDescription>
+            Track limitations on losses (At-Risk, Passive Activity, EBL, NOL) for each tax year.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <LossLimitationTable
+            interestId={interestId}
+            basisWalk={basisWalk}
+            onUpdate={loadBasisWalk}
           />
         </CardContent>
       </Card>
