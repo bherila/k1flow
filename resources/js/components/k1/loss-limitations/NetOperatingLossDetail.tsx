@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, Loader2, ExternalLink } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 
 interface Props {
@@ -93,8 +93,15 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
 
       {priorYearData && (
         <Card className="bg-muted/30">
-          <CardHeader className="py-3">
+          <CardHeader className="py-3 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium">Prior Year ({year - 1}) Reference</CardTitle>
+            <a 
+              href={`/ownership/${interestId}/net-operating-loss/${year - 1}`}
+              className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Edit {year - 1} NOL
+            </a>
           </CardHeader>
           <CardContent className="py-3">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -103,7 +110,16 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
                 <p className="font-mono">{priorYearData.nol_deduction_used ? formatCurrency(priorYearData.nol_deduction_used) : '—'}</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">EBL Carryover → NOL</Label>
+                <Label className="text-xs text-muted-foreground flex items-center justify-between pr-2">
+                  <span>EBL Carryover → NOL</span>
+                  <a 
+                    href={`/ownership/${interestId}/excess-business-loss/${year - 1}`}
+                    className="hover:text-primary transition-colors"
+                    title={`Edit ${year - 1} EBL`}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </Label>
                 <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
                   {priorYearData.excess_business_loss_carryover ? formatCurrency(priorYearData.excess_business_loss_carryover) : '—'}
                 </p>
