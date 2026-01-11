@@ -12,9 +12,8 @@ export function GoToButton({ text, targetUri, className }: Props) {
   return (
     <Button 
       type="button"
-      variant="outline"
       size="sm"
-      className={`h-8 text-xs gap-1.5 ${className || ''}`}
+      className={`h-8 text-xs gap-1.5 font-medium text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-sm hover:shadow-md transition-all duration-300 border-none ${className || ''}`}
       onClick={() => window.location.href = targetUri}
     >
       {text}
