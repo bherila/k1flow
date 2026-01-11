@@ -17,6 +17,7 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [priorYearData, setPriorYearData] = useState<LossLimitation | null>(null);
   const [formData, setFormData] = useState({
     nol_deduction_used: '',
     nol_carryforward: '',
@@ -29,11 +30,13 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
 
   const loadData = async () => {
     try {
-      const [interestData, lossData] = await Promise.all([
+      const [interestData, lossData, priorLossData] = await Promise.all([
         fetchWrapper.get(`/api/ownership-interests/${interestId}`),
-        fetchWrapper.get(`/api/ownership-interests/${interestId}/losses/${year}`)
+        fetchWrapper.get(`/api/ownership-interests/${interestId}/losses/${year}`),
+        fetchWrapper.get(`/api/ownership-interests/${interestId}/losses/${year - 1}`).catch(() => null)
       ]);
       setInterest(interestData);
+      setPriorYearData(priorLossData);
       setFormData({
         nol_deduction_used: lossData.nol_deduction_used || '',
         nol_carryforward: lossData.nol_carryforward || '',
@@ -86,6 +89,32 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
           </p>
         )}
       </div>
+
+      {priorYearData && (
+        <Card className="bg-muted/30">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium">Prior Year ({year - 1}) Reference</CardTitle>
+          </CardHeader>
+          <CardContent className="py-3">
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <Label className="text-xs text-muted-foreground">Used in {year - 1}</Label>
+                <p className="font-mono">{priorYearData.nol_deduction_used ? formatCurrency(priorYearData.nol_deduction_used) : '—'}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Carryforward to {year}</Label>
+                <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                  {priorYearData.nol_carryforward ? formatCurrency(priorYearData.nol_carryforward) : '—'}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">80% Limit {year - 1}</Label>
+                <p className="font-mono">{priorYearData.nol_80_percent_limit ? formatCurrency(priorYearData.nol_80_percent_limit) : '—'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
