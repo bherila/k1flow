@@ -108,38 +108,51 @@ export default function AtRiskDetail({ interestId, year }: Props) {
 
       {priorYearData && (!interest?.inception_basis_year || year > interest.inception_basis_year) && (
         <Card className="bg-muted/30 border-dashed">
-          <CardHeader className="py-3">
+          <CardHeader className="py-2.5 pb-0">
             <CardTitle className="text-sm font-medium">Prior Year ({year - 1}) Reference</CardTitle>
           </CardHeader>
           <CardContent className="py-3">
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <Label className="text-xs text-muted-foreground">Capital At Risk</Label>
-                <p className="font-mono">{priorYearData.capital_at_risk ? formatCurrency(priorYearData.capital_at_risk) : '—'}</p>
+            <div className="flex items-end justify-between gap-4">
+              <div className="grid grid-cols-3 gap-4 text-sm flex-1">
+                <div>
+                  <Label className="text-xs">Capital At Risk</Label>
+                  <p className="font-mono">{priorYearData.capital_at_risk ? formatCurrency(priorYearData.capital_at_risk) : '—'}</p>
+                </div>
+                <div>
+                  <Label className="text-xs">Deductible</Label>
+                  <p className="font-mono">{priorYearData.at_risk_deductible ? formatCurrency(priorYearData.at_risk_deductible) : '—'}</p>
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center justify-between pr-2">
+                    <span>Carryover</span>
+                    {priorYearData.at_risk_carryover && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-4 w-4" 
+                        title="Copy to current year"
+                        onClick={() => setFormData(prev => ({ ...prev, capital_at_risk: priorYearData.at_risk_carryover || '' }))}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </Label>
+                  <p className="font-mono font-bold">
+                    {priorYearData.at_risk_carryover ? formatCurrency(priorYearData.at_risk_carryover) : '—'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground text-green-600 dark:text-green-400">Deductible</Label>
-                <p className="font-mono">{priorYearData.at_risk_deductible ? formatCurrency(priorYearData.at_risk_deductible) : '—'}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground flex items-center justify-between pr-2 text-red-600 dark:text-red-400">
-                  <span>Carryover</span>
-                  {priorYearData.at_risk_carryover && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-4 w-4" 
-                      title="Copy to current year"
-                      onClick={() => setFormData(prev => ({ ...prev, capital_at_risk: priorYearData.at_risk_carryover || '' }))}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  )}
-                </Label>
-                <p className="font-mono font-bold">
-                  {priorYearData.at_risk_carryover ? formatCurrency(priorYearData.at_risk_carryover) : '—'}
-                </p>
-              </div>
+
+              <Button 
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5"
+                onClick={() => window.location.href = `/ownership/${interestId}/at-risk/${year - 1}`}
+              >
+                Edit {year - 1} At-Risk
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </CardContent>
         </Card>

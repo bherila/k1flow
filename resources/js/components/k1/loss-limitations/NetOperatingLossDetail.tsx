@@ -94,48 +94,57 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
 
       {priorYearData && (!interest?.inception_basis_year || year > interest.inception_basis_year) && (
         <Card className="bg-muted/30">
-          <CardHeader className="py-3 flex flex-row items-center justify-between space-y-0">
+          <CardHeader className="py-2.5 pb-0 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium">Prior Year ({year - 1}) Reference</CardTitle>
-            <a 
-              href={`/ownership/${interestId}/net-operating-loss/${year - 1}`}
-              className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
-            >
-              <ExternalLink className="h-3 w-3" />
-              Edit {year - 1} NOL
-            </a>
           </CardHeader>
           <CardContent className="py-3">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <Label className="text-xs text-muted-foreground">Used in {year - 1}</Label>
-                <p className="font-mono">{priorYearData.nol_deduction_used ? formatCurrency(priorYearData.nol_deduction_used) : '—'}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">
-                  EBL carried-over as NOL
-                </Label>
-                <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
-                  {priorYearData.excess_business_loss_carryover ? formatCurrency(priorYearData.excess_business_loss_carryover) : '—'}
-                </p>
-                <div className="pt-0.5">
-                  <a 
-                    href={`/ownership/${interestId}/excess-business-loss/${year - 1}`}
-                    className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5 whitespace-nowrap overflow-hidden"
-                  >
-                    Go to {year - 1} EBL
-                    <ArrowRight className="h-2.5 w-2.5" />
-                  </a>
+            <div className="flex items-end justify-between gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm flex-1">
+                <div>
+                  <Label className="text-xs">Used in {year - 1}</Label>
+                  <p className="font-mono">{priorYearData.nol_deduction_used ? formatCurrency(priorYearData.nol_deduction_used) : '—'}</p>
+                </div>
+                <div>
+                  <Label className="text-xs">
+                    EBL carried-over as NOL
+                  </Label>
+                  <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                    {priorYearData.excess_business_loss_carryover ? formatCurrency(priorYearData.excess_business_loss_carryover) : '—'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs">NOL Carryforward to {year}</Label>
+                  <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                    {priorYearData.nol_carryforward ? formatCurrency(priorYearData.nol_carryforward) : '—'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs">80% Limit {year - 1}</Label>
+                  <p className="font-mono">{priorYearData.nol_80_percent_limit ? formatCurrency(priorYearData.nol_80_percent_limit) : '—'}</p>
                 </div>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">NOL Carryforward to {year}</Label>
-                <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
-                  {priorYearData.nol_carryforward ? formatCurrency(priorYearData.nol_carryforward) : '—'}
-                </p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">80% Limit {year - 1}</Label>
-                <p className="font-mono">{priorYearData.nol_80_percent_limit ? formatCurrency(priorYearData.nol_80_percent_limit) : '—'}</p>
+
+              <div className="flex flex-col gap-2 min-w-fit">
+                <Button 
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5"
+                  onClick={() => window.location.href = `/ownership/${interestId}/excess-business-loss/${year - 1}`}
+                >
+                  Go to {year - 1} EBL
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+                <Button 
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5"
+                  onClick={() => window.location.href = `/ownership/${interestId}/net-operating-loss/${year - 1}`}
+                >
+                  Edit {year - 1} NOL
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           </CardContent>
