@@ -6,6 +6,7 @@ use App\Http\Controllers\K1\K1IncomeSourceController;
 use App\Http\Controllers\K1\OwnershipInterestController;
 use App\Http\Controllers\K1\OutsideBasisController;
 use App\Http\Controllers\K1\LossLimitationController;
+use App\Http\Controllers\K1\F461WorksheetController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -69,6 +70,10 @@ Route::prefix('ownership-interests')->group(function () {
     // Loss Carryforwards (across all years for an ownership interest)
     Route::get('{interest}/carryforwards', [LossLimitationController::class, 'carryforwards']);
     Route::post('{interest}/carryforwards', [LossLimitationController::class, 'storeCarryforward']);
+
+    // Form 461 Worksheet
+    Route::get('{interest}/f461/{taxYear}', [F461WorksheetController::class, 'show']);
+    Route::put('{interest}/f461/{taxYear}', [F461WorksheetController::class, 'update']);
 });
 
 // Adjustment and carryforward updates/deletes (don't need ownership context)

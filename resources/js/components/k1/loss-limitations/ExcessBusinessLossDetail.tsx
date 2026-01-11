@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ChevronLeft, Loader2, ArrowRight, ArrowLeft, Copy } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 import { LossLimitationTabs } from '../LossLimitationTabs';
+import Form461Worksheet from './Form461Worksheet';
 
 interface Props {
   interestId: number;
@@ -180,6 +181,15 @@ export default function ExcessBusinessLossDetail({ interestId, year }: Props) {
           </form>
         </CardContent>
       </Card>
+
+      <Form461Worksheet 
+        interestId={interestId} 
+        year={year} 
+        onCalculationUpdate={(ebl) => {
+            // Optional: auto-update the top form if the calculation changes?
+            // For now just letting the user see the result.
+        }}
+      />
     </div>
   );
 }

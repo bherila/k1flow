@@ -305,3 +305,22 @@ export interface LossCarryforward {
   created_at: string;
   updated_at: string;
 }
+
+// Form 461 Worksheet
+export interface F461Worksheet {
+  id: number;
+  ownership_interest_id: number;
+  tax_year: number;
+  line_2: string | null;
+  line_3: string | null;
+  line_4: string | null;
+  line_5: string | null;
+  line_6: string | null;
+  line_8: string | null;
+  line_10: string | null;
+  line_11: string | null;
+  line_15: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
