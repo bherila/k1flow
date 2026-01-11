@@ -133,8 +133,8 @@ export default function ExcessBusinessLossDetail({ interestId, year }: Props) {
               </div>
               
               <GoToButton 
-                text={`Go to ${year} NOL`}
-                targetUri={`/ownership/${interestId}/net-operating-loss/${year}`}
+                text={`Edit ${year - 1} EBL`}
+                targetUri={`/ownership/${interestId}/excess-business-loss/${year - 1}`}
               />
             </div>
           </CardContent>
