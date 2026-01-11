@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Loader2, ExternalLink } from 'lucide-react';
+import { ChevronLeft, Loader2, ExternalLink, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 
 interface Props {
@@ -110,19 +110,21 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
                 <p className="font-mono">{priorYearData.nol_deduction_used ? formatCurrency(priorYearData.nol_deduction_used) : '—'}</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground flex items-center justify-between pr-2">
-                  <span>EBL Carryover → NOL</span>
-                  <a 
-                    href={`/ownership/${interestId}/excess-business-loss/${year - 1}`}
-                    className="hover:text-primary transition-colors"
-                    title={`Edit ${year - 1} EBL`}
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                <Label className="text-xs text-muted-foreground">
+                  EBL Carryover → NOL
                 </Label>
                 <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
                   {priorYearData.excess_business_loss_carryover ? formatCurrency(priorYearData.excess_business_loss_carryover) : '—'}
                 </p>
+                <div className="pt-0.5">
+                  <a 
+                    href={`/ownership/${interestId}/excess-business-loss/${year - 1}`}
+                    className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5 whitespace-nowrap overflow-hidden"
+                  >
+                    Go to {year - 1} EBL
+                    <ArrowRight className="h-2.5 w-2.5" />
+                  </a>
+                </div>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">NOL Carryforward to {year}</Label>
