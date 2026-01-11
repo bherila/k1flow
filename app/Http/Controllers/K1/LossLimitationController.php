@@ -44,6 +44,9 @@ class LossLimitationController extends Controller
             'passive_loss_carryover' => 'nullable|numeric',
             'excess_business_loss' => 'nullable|numeric',
             'excess_business_loss_carryover' => 'nullable|numeric',
+            'nol_deduction_used' => 'nullable|numeric',
+            'nol_carryforward' => 'nullable|numeric',
+            'nol_80_percent_limit' => 'nullable|numeric',
             'notes' => 'nullable|string',
         ]);
 

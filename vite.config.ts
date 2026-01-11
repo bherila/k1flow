@@ -7,14 +7,17 @@ import path from 'path';
 export default defineConfig({
   plugins: [
     laravel({
-      input: [
-        'resources/css/app.css',
-        'resources/js/app.jsx',
-        'resources/js/navbar.tsx',
-        'resources/js/home.tsx',
-        'resources/js/ownership-interest.tsx',
-        'resources/js/ownership-basis-detail.tsx',
-      ],
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.jsx',
+                'resources/js/company.tsx',
+                'resources/js/k1-form.tsx',
+                'resources/js/ownership-interest.tsx',
+                'resources/js/ownership-basis-detail.tsx',
+                'resources/js/loss-limitation-detail.tsx',
+                'resources/js/home.tsx',
+                'resources/js/irsf461/irsf461.tsx',
+            ],
       refresh: true,
     }),
     react(),

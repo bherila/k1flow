@@ -42,3 +42,67 @@ Route::get('/ownership/{interestId}/basis/{year}/adjustments', function ($intere
 });
 
 
+
+Route::get('/ownership/{interestId}/at-risk/{year}', function ($interestId, $year) {
+
+    return view('loss-limitation-detail', [
+
+        'interestId' => $interestId,
+
+        'year' => $year,
+
+        'type' => 'at-risk'
+
+    ]);
+
+});
+
+
+
+Route::get('/ownership/{interestId}/passive-activity-loss/{year}', function ($interestId, $year) {
+
+    return view('loss-limitation-detail', [
+
+        'interestId' => $interestId,
+
+        'year' => $year,
+
+        'type' => 'passive-activity'
+
+    ]);
+
+});
+
+
+
+Route::get('/ownership/{interestId}/excess-business-loss/{year}', function ($interestId, $year) {
+
+    return view('loss-limitation-detail', [
+
+        'interestId' => $interestId,
+
+        'year' => $year,
+
+        'type' => 'excess-business-loss'
+
+    ]);
+
+});
+
+
+
+Route::get('/ownership/{interestId}/net-operating-loss/{year}', function ($interestId, $year) {
+
+    return view('loss-limitation-detail', [
+
+        'interestId' => $interestId,
+
+        'year' => $year,
+
+        'type' => 'net-operating-loss'
+
+    ]);
+
+});
+
+

@@ -140,7 +140,6 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
           <LossLimitationTable
             interestId={interestId}
             basisWalk={basisWalk}
-            onUpdate={loadBasisWalk}
           />
         </CardContent>
       </Card>
