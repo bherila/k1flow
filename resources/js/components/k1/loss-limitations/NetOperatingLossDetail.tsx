@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, Loader2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
 
 interface Props {
   interestId: number;
@@ -96,13 +97,19 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
             <CardTitle className="text-sm font-medium">Prior Year ({year - 1}) Reference</CardTitle>
           </CardHeader>
           <CardContent className="py-3">
-            <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <Label className="text-xs text-muted-foreground">Used in {year - 1}</Label>
                 <p className="font-mono">{priorYearData.nol_deduction_used ? formatCurrency(priorYearData.nol_deduction_used) : '—'}</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Carryforward to {year}</Label>
+                <Label className="text-xs text-muted-foreground">EBL Carryover → NOL</Label>
+                <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                  {priorYearData.excess_business_loss_carryover ? formatCurrency(priorYearData.excess_business_loss_carryover) : '—'}
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">NOL Carryforward to {year}</Label>
                 <p className="font-mono font-bold text-blue-600 dark:text-blue-400">
                   {priorYearData.nol_carryforward ? formatCurrency(priorYearData.nol_carryforward) : '—'}
                 </p>
