@@ -31,6 +31,18 @@ export default function Form461Worksheet({ interestId, year, onCalculationUpdate
     line_15: '',
   });
 
+  const isDirty = data ? (
+    formData.line_2 !== (data.line_2 || '') ||
+    formData.line_3 !== (data.line_3 || '') ||
+    formData.line_4 !== (data.line_4 || '') ||
+    formData.line_5 !== (data.line_5 || '') ||
+    formData.line_6 !== (data.line_6 || '') ||
+    formData.line_8 !== (data.line_8 || '') ||
+    formData.line_10 !== (data.line_10 || '') ||
+    formData.line_11 !== (data.line_11 || '') ||
+    formData.line_15 !== (data.line_15 || '')
+  ) : false;
+
   useEffect(() => {
     loadData();
   }, [interestId, year]);
@@ -181,7 +193,7 @@ export default function Form461Worksheet({ interestId, year, onCalculationUpdate
           </div>
 
           <div className="flex justify-end pt-4">
-            <Button type="submit" disabled={saving} className="gap-2">
+            <Button type="submit" disabled={saving || !isDirty} className="gap-2">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Save Worksheet
             </Button>
