@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, Loader2, ArrowRight, ArrowLeft, Copy } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
 
 interface Props {
   interestId: number;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function PassiveActivityDetail({ interestId, year }: Props) {
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
+  const [priorYearData, setPriorYearData] = useState<LossLimitation | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,11 +31,13 @@ export default function PassiveActivityDetail({ interestId, year }: Props) {
 
   const loadData = async () => {
     try {
-      const [interestData, lossData] = await Promise.all([
+      const [interestData, lossData, priorLossData] = await Promise.all([
         fetchWrapper.get(`/api/ownership-interests/${interestId}`),
-        fetchWrapper.get(`/api/ownership-interests/${interestId}/losses/${year}`)
+        fetchWrapper.get(`/api/ownership-interests/${interestId}/losses/${year}`),
+        fetchWrapper.get(`/api/ownership-interests/${interestId}/losses/${year - 1}`).catch(() => null)
       ]);
       setInterest(interestData);
+      setPriorYearData(priorLossData);
       setFormData({
         passive_activity_loss: lossData.passive_activity_loss || '',
         passive_loss_allowed: lossData.passive_loss_allowed || '',
@@ -69,11 +73,32 @@ export default function PassiveActivityDetail({ interestId, year }: Props) {
 
   return (
     <div className="space-y-6 container mx-auto py-8 max-w-3xl">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between">
         <Button variant="ghost" className="pl-0 gap-2" onClick={() => window.location.href = `/ownership/${interestId}?tab=basis`}>
           <ChevronLeft className="h-4 w-4" />
           Back to Ownership Summary
         </Button>
+
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1"
+            onClick={() => window.location.href = `/ownership/${interestId}/passive-activity-loss/${year - 1}`}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {year - 1}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1"
+            onClick={() => window.location.href = `/ownership/${interestId}/passive-activity-loss/${year + 1}`}
+          >
+            {year + 1}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div>
@@ -86,6 +111,45 @@ export default function PassiveActivityDetail({ interestId, year }: Props) {
           </p>
         )}
       </div>
+
+      {priorYearData && (
+        <Card className="bg-muted/30 border-dashed">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium">Prior Year ({year - 1}) Reference</CardTitle>
+          </CardHeader>
+          <CardContent className="py-3">
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <Label className="text-xs text-muted-foreground">Total Loss</Label>
+                <p className="font-mono">{priorYearData.passive_activity_loss ? formatCurrency(priorYearData.passive_activity_loss) : '—'}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground text-green-600 dark:text-green-400">Allowed</Label>
+                <p className="font-mono">{priorYearData.passive_loss_allowed ? formatCurrency(priorYearData.passive_loss_allowed) : '—'}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground flex items-center justify-between pr-2 text-red-600 dark:text-red-400">
+                  <span>Carryover</span>
+                  {priorYearData.passive_loss_carryover && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-4 w-4" 
+                      title="Copy to current year"
+                      onClick={() => setFormData(prev => ({ ...prev, passive_activity_loss: priorYearData.passive_loss_carryover || '' }))}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  )}
+                </Label>
+                <p className="font-mono font-bold">
+                  {priorYearData.passive_loss_carryover ? formatCurrency(priorYearData.passive_loss_carryover) : '—'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
