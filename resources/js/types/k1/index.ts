@@ -177,6 +177,7 @@ export interface OutsideBasis {
   total_increases?: number;
   total_decreases?: number;
   net_adjustment?: number;
+  ending_basis?: number | null;
 }
 
 // OB Adjustment
