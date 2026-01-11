@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Loader2, Save, ArrowRight, ArrowLeft, Copy } from 'lucide-react';
+import { ChevronLeft, Loader2, Save, ArrowLeft, Copy } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 import { LossLimitationTabs } from '../LossLimitationTabs';
+import { GoToButton } from '../GoToButton';
 
 interface Props {
   interestId: number;
@@ -143,16 +144,10 @@ export default function AtRiskDetail({ interestId, year }: Props) {
                 </div>
               </div>
 
-              <Button 
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs gap-1.5"
-                onClick={() => window.location.href = `/ownership/${interestId}/at-risk/${year - 1}`}
-              >
-                Edit {year - 1} At-Risk
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
+              <GoToButton 
+                text={`Edit ${year - 1} At-Risk`}
+                targetUri={`/ownership/${interestId}/at-risk/${year - 1}`}
+              />
             </div>
           </CardContent>
         </Card>

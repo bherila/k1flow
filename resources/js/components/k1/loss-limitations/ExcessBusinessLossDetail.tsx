@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Loader2, ArrowRight, ArrowLeft, Copy, Save } from 'lucide-react';
+import { ChevronLeft, Loader2, ArrowLeft, Copy, Save } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 import { LossLimitationTabs } from '../LossLimitationTabs';
+import { GoToButton } from '../GoToButton';
 import Form461Worksheet from './Form461Worksheet';
 
 interface Props {
@@ -131,16 +132,10 @@ export default function ExcessBusinessLossDetail({ interestId, year }: Props) {
                 </div>
               </div>
               
-              <Button 
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs gap-1.5"
-                onClick={() => window.location.href = `/ownership/${interestId}/net-operating-loss/${year}`}
-              >
-                Go to {year} NOL
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
+              <GoToButton 
+                text={`Go to ${year} NOL`}
+                targetUri={`/ownership/${interestId}/net-operating-loss/${year}`}
+              />
             </div>
           </CardContent>
         </Card>
@@ -184,15 +179,11 @@ export default function ExcessBusinessLossDetail({ interestId, year }: Props) {
             </div>
 
             <div className="pt-4 flex justify-between items-center">
-              <Button 
-                type="button"
-                variant="outline"
-                className="gap-2"
-                onClick={() => window.location.href = `/ownership/${interestId}/net-operating-loss/${year + 1}`}
-              >
-                Go to {year + 1} Net Operating Loss
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              <GoToButton 
+                text={`Go to ${year + 1} Net Operating Loss`}
+                targetUri={`/ownership/${interestId}/net-operating-loss/${year + 1}`}
+                className="h-10 text-sm"
+              />
 
               <Button type="submit" disabled={saving || !isDirty} className="gap-2">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

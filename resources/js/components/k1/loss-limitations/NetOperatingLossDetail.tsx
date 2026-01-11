@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Loader2, ExternalLink, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, Loader2, ArrowLeft } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
 import { LossLimitationTabs } from '../LossLimitationTabs';
+import { GoToButton } from '../GoToButton';
 
 interface Props {
   interestId: number;
@@ -125,26 +126,14 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
               </div>
 
               <div className="flex flex-col gap-2 min-w-fit">
-                <Button 
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 text-xs gap-1.5"
-                  onClick={() => window.location.href = `/ownership/${interestId}/excess-business-loss/${year - 1}`}
-                >
-                  Go to {year - 1} EBL
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-                <Button 
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 text-xs gap-1.5"
-                  onClick={() => window.location.href = `/ownership/${interestId}/net-operating-loss/${year - 1}`}
-                >
-                  Edit {year - 1} NOL
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
+                <GoToButton 
+                  text={`Go to ${year - 1} EBL`}
+                  targetUri={`/ownership/${interestId}/excess-business-loss/${year - 1}`}
+                />
+                <GoToButton 
+                  text={`Edit ${year - 1} NOL`}
+                  targetUri={`/ownership/${interestId}/net-operating-loss/${year - 1}`}
+                />
               </div>
             </div>
           </CardContent>
