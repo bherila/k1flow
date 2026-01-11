@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronLeft, Plus, Trash2, Loader2, FileText, Upload } from 'lucide-react';
+import { LossLimitationTabs } from './LossLimitationTabs';
 
 const INCREASE_LABELS: Record<string, string> = {
   cash_contribution: 'Cash contributions',
@@ -183,13 +184,12 @@ export default function OwnershipBasisDetail({ interestId, year }: Props) {
 
   return (
     <div className="space-y-6 container mx-auto py-8 max-w-5xl">
-      {/* Breadcrumb / Back Link */}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" className="pl-0 gap-2" onClick={() => window.location.href = `/ownership/${interestId}`}>
-          <ChevronLeft className="h-4 w-4" />
-          Back to Ownership Summary
-        </Button>
-      </div>
+      <LossLimitationTabs 
+        interestId={interestId} 
+        year={year} 
+        activeTab="basis" 
+        inceptionYear={interest?.inception_basis_year}
+      />
 
       {/* Header */}
       <div>

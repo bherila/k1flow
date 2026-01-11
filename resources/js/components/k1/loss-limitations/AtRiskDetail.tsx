@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, Loader2, Save, ArrowRight, ArrowLeft, Copy } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
+import { LossLimitationTabs } from '../LossLimitationTabs';
 
 interface Props {
   interestId: number;
@@ -87,33 +88,12 @@ export default function AtRiskDetail({ interestId, year }: Props) {
 
   return (
     <div className="space-y-6 container mx-auto py-8 max-w-3xl">
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" className="pl-0 gap-2" onClick={() => window.location.href = `/ownership/${interestId}?tab=basis`}>
-          <ChevronLeft className="h-4 w-4" />
-          Back to Ownership Summary
-        </Button>
-
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-1"
-            onClick={() => window.location.href = `/ownership/${interestId}/at-risk/${year - 1}`}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {year - 1}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-1"
-            onClick={() => window.location.href = `/ownership/${interestId}/at-risk/${year + 1}`}
-          >
-            {year + 1}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <LossLimitationTabs 
+        interestId={interestId} 
+        year={year} 
+        activeTab="at-risk" 
+        inceptionYear={interest?.inception_basis_year}
+      />
 
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
