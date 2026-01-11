@@ -92,7 +92,7 @@ export default function NetOperatingLossDetail({ interestId, year }: Props) {
         )}
       </div>
 
-      {priorYearData && (
+      {priorYearData && (!interest?.inception_basis_year || year > interest.inception_basis_year) && (
         <Card className="bg-muted/30">
           <CardHeader className="py-3 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium">Prior Year ({year - 1}) Reference</CardTitle>

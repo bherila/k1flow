@@ -90,6 +90,41 @@ export default function ExcessBusinessLossDetail({ interestId, year }: Props) {
         )}
       </div>
 
+      {priorYearData && (!interest?.inception_basis_year || year > interest.inception_basis_year) && (
+        <Card className="bg-muted/30 border-dashed">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium">Prior Year ({year - 1}) Reference</CardTitle>
+          </CardHeader>
+          <CardContent className="py-3">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <Label className="text-xs text-muted-foreground">Excess Business Loss</Label>
+                <p className="font-mono">{priorYearData.excess_business_loss ? formatCurrency(priorYearData.excess_business_loss) : '—'}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground flex items-center justify-between pr-2 text-blue-600 dark:text-blue-400">
+                  <span>Carryover to {year} (as NOL)</span>
+                  {priorYearData.excess_business_loss_carryover && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-4 w-4" 
+                      title="Copy to current year (if needed)"
+                      onClick={() => setFormData(prev => ({ ...prev, excess_business_loss: priorYearData.excess_business_loss_carryover || '' }))}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  )}
+                </Label>
+                <p className="font-mono font-bold">
+                  {priorYearData.excess_business_loss_carryover ? formatCurrency(priorYearData.excess_business_loss_carryover) : '—'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Section 461(l) Details</CardTitle>

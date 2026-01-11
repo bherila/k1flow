@@ -92,7 +92,7 @@ export default function PassiveActivityDetail({ interestId, year }: Props) {
         )}
       </div>
 
-      {priorYearData && (
+      {priorYearData && (!interest?.inception_basis_year || year > interest.inception_basis_year) && (
         <Card className="bg-muted/30 border-dashed">
           <CardHeader className="py-3">
             <CardTitle className="text-sm font-medium">Prior Year ({year - 1}) Reference</CardTitle>
