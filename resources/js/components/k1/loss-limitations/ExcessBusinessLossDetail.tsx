@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, Loader2, ArrowRight } from 'lucide-react';
 
 interface Props {
   interestId: number;
@@ -120,6 +120,15 @@ export default function ExcessBusinessLossDetail({ interestId, year }: Props) {
               <p className="text-xs text-muted-foreground">
                 This amount is treated as a Net Operating Loss (NOL) in {year + 1}
               </p>
+              <div className="pt-1">
+                <a 
+                  href={`/ownership/${interestId}/net-operating-loss/${year + 1}`}
+                  className="text-sm text-primary hover:underline flex items-center gap-1 w-fit"
+                >
+                  Go to {year + 1} Net Operating Loss
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
             </div>
 
             <div className="pt-4 flex justify-end">
