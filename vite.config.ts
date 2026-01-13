@@ -16,6 +16,7 @@ export default defineConfig({
                 'resources/js/ownership-basis-detail.tsx',
                 'resources/js/loss-limitation-detail.tsx',
                 'resources/js/home.tsx',
+                'resources/js/navbar.tsx',
             ],
       refresh: true,
     }),
