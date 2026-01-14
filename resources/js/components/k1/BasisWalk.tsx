@@ -7,10 +7,11 @@ import type {
   ObAdjustment,
 } from '@/types/k1';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Info } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import BasisTable from './BasisTable';
 import CarryoverSummary from './CarryoverSummary';
 import LossLimitationTable from './LossLimitationTable';
+import LossCarryforwardCard from './LossCarryforwardCard';
 
 // Local copies of the labels
 const INCREASE_LABELS: Record<string, string> = {
@@ -61,8 +62,8 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
   const loadBasisWalk = useCallback(async () => {
     try {
       setLoading(true);
-      const data: BasisWalkResponse = await fetchWrapper.get(`/api/ownership-interests/${interestId}/basis-walk`);
-      setBasisWalk(data.basis_walk);
+      const basisData: BasisWalkResponse = await fetchWrapper.get(`/api/ownership-interests/${interestId}/basis-walk`);
+      setBasisWalk(basisData.basis_walk);
     } catch (error) {
       console.error('Failed to load basis walk:', error);
     } finally {
@@ -144,7 +145,11 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
         </CardContent>
       </Card>
 
+      <LossCarryforwardCard interestId={interestId} />
+
       <CarryoverSummary years={years} basisWalk={basisWalk} />
     </div>
   );
 }
+
+

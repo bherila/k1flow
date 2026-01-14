@@ -1,21 +1,12 @@
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
-import type { OwnershipInterest, LossCarryforward, K1Company } from '@/types/k1';
+import type { OwnershipInterest, K1Company } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Loader2 } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import BasisWalk from './BasisWalk';
 import InceptionBasisModal from './InceptionBasisModal';
 
@@ -32,13 +23,9 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
   
   // Inception Basis state (stored on ownership interest itself)
   const inceptionDataRef = useRef<Partial<OwnershipInterest>>({});
-  const inceptionPendingRef = useRef<Set<keyof OwnershipInterest>>(new Set());
   
   // Key to force BasisWalk refresh when inception changes
   const [basisWalkKey, setBasisWalkKey] = useState(0);
-  
-  // Carryforwards
-  const [carryforwards, setCarryforwards] = useState<LossCarryforward[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -46,12 +33,6 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
   useEffect(() => {
     loadInterest();
   }, [interestId]);
-
-  useEffect(() => {
-    if (interest) {
-      loadCarryforwards();
-    }
-  }, [interest]);
 
   const loadInterest = async () => {
     console.log('[OwnershipInterestDetail] Loading interest data...');
@@ -74,80 +55,6 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
     } finally {
       console.log('[OwnershipInterestDetail] Setting loading to false');
       setLoading(false);
-    }
-  };
-
-  const loadCarryforwards = async () => {
-    try {
-      const data = await fetchWrapper.get(`/api/ownership-interests/${interestId}/carryforwards`);
-      setCarryforwards(data);
-    } catch (error) {
-      console.error('Failed to load carryforwards:', error);
-    }
-  };
-
-  // Inception Basis field handlers (save directly to ownership interest)
-  const handleInceptionChange = useCallback((field: keyof OwnershipInterest, value: any) => {
-    inceptionDataRef.current = { ...inceptionDataRef.current, [field]: value };
-    inceptionPendingRef.current.add(field);
-  }, []);
-
-  const saveInceptionField = useCallback(async (field: keyof OwnershipInterest) => {
-    if (!inceptionPendingRef.current.has(field)) return;
-
-    setSaveStatus('saving');
-    try {
-      const payload = { [field]: inceptionDataRef.current[field] };
-
-      const updated = await fetchWrapper.put(`/api/ownership-interests/${interestId}`, payload);
-      setInterest(updated);
-      inceptionDataRef.current = { ...inceptionDataRef.current, ...payload };
-      inceptionPendingRef.current.delete(field);
-      setSaveStatus('saved');
-      // Trigger BasisWalk refresh when inception values change
-      if (field === 'inception_basis_year' || field === 'inception_basis_total') {
-        setBasisWalkKey(prev => prev + 1);
-      }
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (error) {
-      console.error('Failed to save:', error);
-      setSaveStatus('error');
-    }
-  }, [interestId]);
-
-  // Carryforwards
-  const addCarryforward = async () => {
-    try {
-      const currentYear = new Date().getFullYear();
-      const newCf = await fetchWrapper.post(`/api/ownership-interests/${interestId}/carryforwards`, {
-        origin_year: currentYear - 1,
-        carryforward_type: 'passive',
-        original_amount: 0,
-        remaining_amount: 0,
-      });
-      setCarryforwards(prev => [...prev, newCf]);
-    } catch (error) {
-      console.error('Failed to add carryforward:', error);
-    }
-  };
-
-  const updateCarryforward = async (id: number, field: string, value: any) => {
-    try {
-      const updated = await fetchWrapper.put(`/api/carryforwards/${id}`, {
-        [field]: value,
-      });
-      setCarryforwards(prev => prev.map(cf => cf.id === id ? updated : cf));
-    } catch (error) {
-      console.error('Failed to update carryforward:', error);
-    }
-  };
-
-  const deleteCarryforward = async (id: number) => {
-    try {
-      await fetchWrapper.delete(`/api/carryforwards/${id}`, {});
-      setCarryforwards(prev => prev.filter(cf => cf.id !== id));
-    } catch (error) {
-      console.error('Failed to delete carryforward:', error);
     }
   };
 
@@ -281,118 +188,13 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
-      <Tabs defaultValue="basis" className="space-y-4">
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
-          <TabsTrigger value="basis">Basis Walk</TabsTrigger>
-          <TabsTrigger value="carryforwards">Carryforwards</TabsTrigger>
-        </TabsList>
-
-        {/* Basis Walk Tab */}
-        <TabsContent value="basis">
-          <BasisWalk 
-            key={basisWalkKey}
-            interestId={interestId}
-            inceptionYear={interest.inception_basis_year}
-            inceptionBasis={interest.inception_basis_total}
-            onInceptionChange={() => setBasisWalkKey(prev => prev + 1)}
-          />
-        </TabsContent>
-
-        {/* Carryforwards Tab */}
-        <TabsContent value="carryforwards">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Loss Carryforwards</CardTitle>
-                <CardDescription>Track suspended losses from prior years</CardDescription>
-              </div>
-              <Button size="sm" onClick={addCarryforward}>
-                <Plus className="mr-2 h-4 w-4" /> Add Carryforward
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {carryforwards.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">
-                  No loss carryforwards recorded
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {carryforwards.map((cf) => (
-                    <div key={cf.id} className="p-4 border rounded-lg space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="grid gap-1 flex-1">
-                          <Label className="text-xs text-muted-foreground">Origin Year</Label>
-                          <Input
-                            type="number"
-                            defaultValue={cf.origin_year}
-                            onBlur={(e) => updateCarryforward(cf.id, 'origin_year', parseInt(e.target.value))}
-                          />
-                        </div>
-                        <div className="grid gap-1 flex-1">
-                          <Label className="text-xs text-muted-foreground">Type</Label>
-                          <Select
-                            defaultValue={cf.carryforward_type}
-                            onValueChange={(v) => updateCarryforward(cf.id, 'carryforward_type', v)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="at_risk">At-Risk</SelectItem>
-                              <SelectItem value="passive">Passive</SelectItem>
-                              <SelectItem value="excess_business_loss">Excess Business Loss</SelectItem>
-                              <SelectItem value="nol">NOL</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-1">
-                          <Label className="text-xs text-muted-foreground">Character</Label>
-                          <Select
-                            defaultValue={cf.loss_character ?? ''}
-                            onValueChange={(v) => updateCarryforward(cf.id, 'loss_character', v || null)}
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue placeholder="—" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="ORD">ORD</SelectItem>
-                              <SelectItem value="CAP">CAP</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-1">
-                          <Label className="text-xs text-muted-foreground">Original</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            className="w-28 font-mono"
-                            defaultValue={cf.original_amount}
-                            onBlur={(e) => updateCarryforward(cf.id, 'original_amount', parseFloat(e.target.value) || 0)}
-                          />
-                        </div>
-                        <div className="grid gap-1">
-                          <Label className="text-xs text-muted-foreground">Remaining</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            className="w-28 font-mono"
-                            defaultValue={cf.remaining_amount}
-                            onBlur={(e) => updateCarryforward(cf.id, 'remaining_amount', parseFloat(e.target.value) || 0)}
-                          />
-                        </div>
-                        <Button variant="ghost" size="icon" className="mt-4" onClick={() => deleteCarryforward(cf.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <BasisWalk 
+        key={basisWalkKey}
+        interestId={interestId}
+        inceptionYear={interest.inception_basis_year}
+        inceptionBasis={interest.inception_basis_total}
+        onInceptionChange={() => setBasisWalkKey(prev => prev + 1)}
+      />
     </div>
   );
 }
