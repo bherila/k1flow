@@ -332,13 +332,13 @@ export default function CompanyDetail({ companyId }: Props) {
           </CardContent>
         </Card>
 
-        {/* Ownership Interests Column */}
+        {/* Ownership Structure Column */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle>Ownership Interests</CardTitle>
+              <CardTitle>Ownership Structure</CardTitle>
               <CardDescription>
-                Partnerships and entities this company owns
+                Ownership hierarchy and relationships
               </CardDescription>
             </div>
             <Dialog open={ownershipDialogOpen} onOpenChange={setOwnershipDialogOpen}>
@@ -411,141 +411,148 @@ export default function CompanyDetail({ companyId }: Props) {
               </DialogContent>
             </Dialog>
           </CardHeader>
-          <CardContent>
-            {ownershipInterests.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <Link2 className="h-10 w-10 text-muted-foreground mb-3" />
-                <h3 className="text-sm font-semibold mb-1">No ownership interests</h3>
-                <p className="text-xs text-muted-foreground text-center mb-3">
-                  Add partnerships or entities this company owns
-                </p>
-                <Button size="sm" onClick={() => setOwnershipDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Interest
-                </Button>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Entity</TableHead>
-                    <TableHead className="text-right">Ownership %</TableHead>
-                    <TableHead>Class</TableHead>
-                    <TableHead className="w-[80px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ownershipInterests.map((interest) => (
-                    <TableRow key={interest.id}>
-                      <TableCell>
-                        <a
-                          href={`/ownership/${interest.id}`}
-                          className="font-medium hover:underline flex items-center"
-                        >
-                          {interest.owned_company?.name ?? 'Unknown'}
-                          <ChevronRight className="ml-1 h-4 w-4" />
-                        </a>
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {formatPercentage(interest.ownership_percentage)}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {interest.ownership_class || '—'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => window.location.href = `/ownership/${interest.id}`}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDeleteOwnership(interest.id)}
-                          >
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+          <CardContent className="space-y-8">
+            {/* Ownership Interests List */}
+            <div>
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Ownership Interests
+                <span className="text-xs font-normal text-muted-foreground ml-2">
+                  (Entities owned by {company.name})
+                </span>
+              </h3>
+              
+              {ownershipInterests.length === 0 ? (
+                <div className="text-sm text-muted-foreground italic pl-6">
+                  No ownership interests recorded.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Entity</TableHead>
+                      <TableHead className="text-right">Ownership %</TableHead>
+                      <TableHead>Class</TableHead>
+                      <TableHead className="w-[180px]">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                  </TableHeader>
+                  <TableBody>
+                    {ownershipInterests.map((interest) => (
+                      <TableRow key={interest.id}>
+                        <TableCell>
+                          <span className="font-medium">
+                            {interest.owned_company?.name ?? 'Unknown'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-sm">
+                          {formatPercentage(interest.ownership_percentage)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {interest.ownership_class || '—'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {interest.owned_company && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                title="Go to company"
+                                onClick={() => window.location.href = `/company/${interest.owned_company!.id}`}
+                              >
+                                Company
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2"
+                              title="View details"
+                              onClick={() => window.location.href = `/ownership/${interest.id}`}
+                            >
+                              Details
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              title="Delete"
+                              onClick={() => handleDeleteOwnership(interest.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+
+            {/* Owned By List */}
+            <div>
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Owned By
+                <span className="text-xs font-normal text-muted-foreground ml-2">
+                  (Entities that own {company.name})
+                </span>
+              </h3>
+
+              {ownedByInterests.length === 0 ? (
+                <div className="text-sm text-muted-foreground italic pl-6">
+                  No owners recorded.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Owner</TableHead>
+                      <TableHead className="text-right">Ownership %</TableHead>
+                      <TableHead>Class</TableHead>
+                      <TableHead className="w-[120px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {ownedByInterests.map((interest) => (
+                      <TableRow key={interest.id}>
+                        <TableCell>
+                          {interest.owner_company ? (
+                            <span className="font-medium">
+                              {interest.owner_company.name}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">Individual Owner</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-sm">
+                          {formatPercentage(interest.ownership_percentage)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {interest.ownership_class || '—'}
+                        </TableCell>
+                        <TableCell>
+                          {interest.owner_company && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2"
+                              onClick={() => window.location.href = `/company/${interest.owner_company!.id}`}
+                            >
+                              Go to owner
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Owned By Section (read-only) */}
-      {ownedByInterests.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <CardTitle>Owned By</CardTitle>
-                <CardDescription>
-                  Companies that have ownership interests in this entity. 
-                  To manage these interests, visit the owning company's page.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Owner</TableHead>
-                  <TableHead className="text-right">Ownership %</TableHead>
-                  <TableHead>Class</TableHead>
-                  <TableHead className="w-[100px]">Manage</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ownedByInterests.map((interest) => (
-                  <TableRow key={interest.id}>
-                    <TableCell>
-                      {interest.owner_company ? (
-                        <a
-                          href={`/company/${interest.owner_company.id}`}
-                          className="font-medium hover:underline flex items-center"
-                        >
-                          {interest.owner_company.name}
-                          <ChevronRight className="ml-1 h-4 w-4" />
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">Individual Owner</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatPercentage(interest.ownership_percentage)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {interest.ownership_class || '—'}
-                    </TableCell>
-                    <TableCell>
-                      {interest.owner_company && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => window.location.href = `/company/${interest.owner_company!.id}`}
-                        >
-                          Go to owner
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
