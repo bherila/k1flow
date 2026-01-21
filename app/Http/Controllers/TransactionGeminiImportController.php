@@ -40,7 +40,7 @@ class TransactionGeminiImportController extends Controller
                 'Content-Type' => 'application/json',
             ])->withOptions([
                 'timeout' => 300,
-            ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', [
+            ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent', [
                 'contents' => [
                     [
                         'parts' => [
