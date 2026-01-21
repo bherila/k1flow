@@ -34,6 +34,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Building2, Users, FileText, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import AddOwnershipInterest from './AddOwnershipInterest';
 
 interface Props {
   companyId: number;
@@ -45,14 +46,6 @@ export default function CompanyDetail({ companyId }: Props) {
   const [ownedByInterests, setOwnedByInterests] = useState<OwnershipInterest[]>([]);
   const [allCompanies, setAllCompanies] = useState<K1Company[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Ownership interest dialog
-  const [ownershipDialogOpen, setOwnershipDialogOpen] = useState(false);
-  const [ownershipFormData, setOwnershipFormData] = useState({
-    owned_company_id: '',
-    ownership_percentage: '',
-    ownership_class: '',
-  });
 
   useEffect(() => {
     loadData();
@@ -78,22 +71,12 @@ export default function CompanyDetail({ companyId }: Props) {
     }
   };
 
-  const handleCreateOwnership = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const reloadInterests = async () => {
     try {
-      await fetchWrapper.post('/api/ownership-interests', {
-        owner_company_id: companyId,
-        owned_company_id: parseInt(ownershipFormData.owned_company_id),
-        ownership_percentage: parseFloat(ownershipFormData.ownership_percentage),
-        ownership_class: ownershipFormData.ownership_class || null,
-      });
-      setOwnershipDialogOpen(false);
-      setOwnershipFormData({ owned_company_id: '', ownership_percentage: '', ownership_class: '' });
-      // Reload interests to get the new one
       const interests = await fetchWrapper.get(`/api/companies/${companyId}/ownership-interests`);
       setOwnershipInterests(interests);
     } catch (error) {
-      console.error('Failed to create ownership interest:', error);
+      console.error('Failed to reload interests:', error);
     }
   };
 
@@ -204,75 +187,11 @@ export default function CompanyDetail({ companyId }: Props) {
             {company.entity_type && <span>{company.entity_type}</span>}
           </div>
         </div>
-        <Dialog open={ownershipDialogOpen} onOpenChange={setOwnershipDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Ownership Interest
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <form onSubmit={handleCreateOwnership}>
-              <DialogHeader>
-                <DialogTitle>Add Ownership Interest</DialogTitle>
-                <DialogDescription>
-                  Add a partnership or entity that this company owns
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="owned_company">Entity Owned *</Label>
-                  <Select
-                    value={ownershipFormData.owned_company_id}
-                    onValueChange={(value) => setOwnershipFormData(prev => ({ ...prev, owned_company_id: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a company..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableCompaniesToOwn.map((c) => (
-                        <SelectItem key={c.id} value={c.id.toString()}>
-                          {c.name} {c.ein ? `(${c.ein})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="ownership_percentage">Ownership % *</Label>
-                  <Input
-                    id="ownership_percentage"
-                    type="number"
-                    step="0.00000000001"
-                    min="0"
-                    max="100"
-                    placeholder="e.g., 25.5"
-                    value={ownershipFormData.ownership_percentage}
-                    onChange={(e) => setOwnershipFormData(prev => ({ ...prev, ownership_percentage: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="ownership_class">Class (optional)</Label>
-                  <Input
-                    id="ownership_class"
-                    placeholder="e.g., Class A, Common"
-                    value={ownershipFormData.ownership_class}
-                    onChange={(e) => setOwnershipFormData(prev => ({ ...prev, ownership_class: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setOwnershipDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={!ownershipFormData.owned_company_id || !ownershipFormData.ownership_percentage}>
-                  Add Interest
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <AddOwnershipInterest 
+          ownerCompanyId={companyId}
+          availableCompanies={availableCompaniesToOwn}
+          onSuccess={reloadInterests}
+        />
       </div>
 
       <Tabs defaultValue="year" className="w-full">

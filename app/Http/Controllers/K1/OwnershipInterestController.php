@@ -61,10 +61,24 @@ class OwnershipInterestController extends Controller
             'effective_to' => 'nullable|date|after:effective_from',
             'ownership_class' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
+            // Inception basis fields
+            'inception_basis_year' => 'nullable|integer|min:1900|max:2100',
+            'inception_date' => 'nullable|date',
+            'method_of_acquisition' => 'nullable|string|in:purchase,gift,inheritance,compensation,contribution',
+            'inheritance_date' => 'nullable|date',
+            'cost_basis_inherited' => 'nullable|numeric',
+            'gift_date' => 'nullable|date',
+            'gift_donor_basis' => 'nullable|numeric',
+            'gift_fmv_at_transfer' => 'nullable|numeric',
+            'contributed_cash_property' => 'nullable|numeric',
+            'purchase_price' => 'nullable|numeric',
+            'gift_inheritance' => 'nullable|numeric',
+            'taxable_compensation' => 'nullable|numeric',
+            'inception_basis_total' => 'nullable|numeric',
         ]);
 
         // Prevent self-ownership
-        if ($validated['owner_company_id'] === $validated['owned_company_id']) {
+        if (($validated['owner_company_id'] ?? null) === $validated['owned_company_id']) {
             return response()->json(['error' => 'A company cannot own itself'], 422);
         }
 
