@@ -14,7 +14,19 @@
 - **Mounting data contract**: Blade views pass IDs via `data-*` (examples in [resources/views/company.blade.php](resources/views/company.blade.php) and [resources/views/ownership-interest.blade.php](resources/views/ownership-interest.blade.php)); ensure new pages keep this pattern so scripts can read integers and hydrate.
 - **UI/formatting conventions**: Money/percent helpers live in [resources/js/lib/currency.ts](resources/js/lib/currency.ts). UI uses shadcn/Radix components under `resources/js/components/ui`. Mermaids use loose security level to allow click-through to company routes.
 - **Build/test workflow**: Install with `composer install && pnpm install`; copy `.env` then `php artisan key:generate` and migrate. Dev: `composer dev` (spawns artisan serve, queue listener, pail logs, Vite via `npx concurrently`) or run `php artisan serve` and `pnpm dev` separately. Tests: `composer test` (PHPUnit) and `pnpm test` (Jest via ts-jest). Build: `pnpm build` (Vite) with inputs from [vite.config.ts](vite.config.ts).
+- **Testing safety**: PHPUnit tests ALWAYS run against in-memory SQLite, never MySQL. This is enforced by `phpunit.xml` environment variables and the base `TestCase` class. For database tests, use `Tests\RefreshDatabaseWithSqliteSchema` trait (not Laravel's `RefreshDatabase`). The SQLite schema is at `database/schema/sqlite-schema.sql`. See [docs/TESTING.md](docs/TESTING.md) for detailed testing guidance.
 - **Storage/infra**: File storage service for S3 in [app/Services/FileStorageService.php](app/Services/FileStorageService.php) and helper trait [app/Traits/HasFileStorage.php](app/Traits/HasFileStorage.php); K-1 PDFs currently use the `private` disk by default.
 - **Path aliases & TS**: Paths configured in [tsconfig.json](tsconfig.json) (`@/*` → `resources/js/*`); TS includes `tests-ts` for frontend unit tests.
 - **When extending**: Keep DECIMAL fields as strings/precise numbers in APIs, preserve `credentials: include` in fetches for session + CSRF, and prefer first-or-create patterns used in controllers for per-year resources.
-<parameter name="filePath">/Users/bwh/proj/bwh/bwh-php/.github/copilot-instructions.md
+- **Writing tests**: When writing PHPUnit tests that need database access, use `Tests\RefreshDatabaseWithSqliteSchema` trait. Do NOT use Laravel's `Illuminate\Foundation\Testing\RefreshDatabase` directly. Example:
+  ```php
+  use Tests\RefreshDatabaseWithSqliteSchema;
+  use Tests\TestCase;
+  
+  class MyTest extends TestCase
+  {
+      use RefreshDatabaseWithSqliteSchema;
+      // ...
+  }
+  ```
+- **Schema updates**: When modifying the database schema, update both `database/schema/mysql-schema.sql` (production) and `database/schema/sqlite-schema.sql` (testing). Key syntax differences: MySQL `AUTO_INCREMENT` → SQLite `AUTOINCREMENT`, MySQL `ENUM(...)` → SQLite `TEXT CHECK (... IN (...))`, MySQL `TINYINT(1)` → SQLite `INTEGER`.

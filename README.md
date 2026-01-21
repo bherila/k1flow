@@ -75,6 +75,20 @@ Or use multiple terminals:
 - Terminal 1: `php artisan serve`
 - Terminal 2: `pnpm run dev`
 
+### Testing
+
+Tests run against an in-memory SQLite database to ensure production data is never affected.
+
+```bash
+# Run PHPUnit tests
+composer test
+
+# Run Jest (TypeScript) tests
+pnpm test
+```
+
+For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md).
+
 ## Database Schema
 
 ### Core Tables

@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\RefreshDatabaseWithSqliteSchema;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    use RefreshDatabaseWithSqliteSchema;
+
     /**
      * A basic test example.
      */

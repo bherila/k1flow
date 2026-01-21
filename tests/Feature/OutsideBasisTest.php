@@ -6,12 +6,12 @@ use App\Models\K1\K1Company;
 use App\Models\K1\OwnershipInterest;
 use App\Models\K1\OutsideBasis;
 use App\Models\K1\ObAdjustment;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\RefreshDatabaseWithSqliteSchema;
 use Tests\TestCase;
 
 class OutsideBasisTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabaseWithSqliteSchema;
 
     public function test_basis_walk_calculation_flow()
     {
