@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
-import type { K1Form, K1Company } from '@/types/k1';
+import type { K1Form, K1Company, OwnershipInterest } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,13 +14,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ChevronLeft, ChevronRight, Save, Upload, FileUp, Loader2 } from 'lucide-react';
 
 interface Props {
-  companyId: number;
+  interestId: number;
   formId: number;
 }
 
-export default function K1FormDetail({ companyId, formId }: Props) {
-  const [company, setCompany] = useState<K1Company | null>(null);
+export default function K1FormDetail({ interestId, formId }: Props) {
   const [form, setForm] = useState<K1Form | null>(null);
+  const [interest, setInterest] = useState<OwnershipInterest | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -37,16 +37,16 @@ export default function K1FormDetail({ companyId, formId }: Props) {
 
   useEffect(() => {
     loadData();
-  }, [companyId, formId]);
+  }, [interestId, formId]);
 
   const loadData = async () => {
     try {
-      const [companyData, formDataResult] = await Promise.all([
-        fetchWrapper.get(`/api/companies/${companyId}`),
-        fetchWrapper.get(`/api/companies/${companyId}/forms/${formId}`),
+      const [formDataResult, interestResult] = await Promise.all([
+        fetchWrapper.get(`/api/forms/${formId}`),
+        fetchWrapper.get(`/api/ownership-interests/${interestId}`),
       ]);
-      setCompany(companyData);
       setForm(formDataResult);
+      setInterest(interestResult);
       formDataRef.current = { ...formDataResult };
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -56,7 +56,6 @@ export default function K1FormDetail({ companyId, formId }: Props) {
   };
 
   // Auto-save on blur - only saves changed fields
-  // NOTE: We do NOT call setForm() here to avoid re-rendering which causes focus loss
   const saveField = useCallback(async (field: keyof K1Form) => {
     if (!pendingChangesRef.current.has(field)) return;
     
@@ -64,12 +63,11 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     setSaving(true);
     try {
       const payload = { [field]: formDataRef.current[field] };
-      const updated = await fetchWrapper.put(`/api/companies/${companyId}/forms/${formId}`, payload);
+      const updated = await fetchWrapper.put(`/api/forms/${formId}`, payload);
       // Only update the ref, not the state, to prevent re-render and focus loss
       formDataRef.current = { ...updated };
       pendingChangesRef.current.delete(field);
       setSaveStatus('saved');
-      // Clear saved status after 2 seconds
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Failed to save:', error);
@@ -77,7 +75,7 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     } finally {
       setSaving(false);
     }
-  }, [companyId, formId]);
+  }, [formId]);
 
   // Handle field change - stores in ref without re-render
   const handleChange = useCallback((field: keyof K1Form, value: any) => {
@@ -90,7 +88,7 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     setSaving(true);
     setSaveStatus('saving');
     try {
-      const updated = await fetchWrapper.put(`/api/companies/${companyId}/forms/${formId}`, formDataRef.current);
+      const updated = await fetchWrapper.put(`/api/forms/${formId}`, formDataRef.current);
       setForm(updated);
       formDataRef.current = { ...updated };
       pendingChangesRef.current.clear();
@@ -119,7 +117,7 @@ export default function K1FormDetail({ companyId, formId }: Props) {
       setUploadProgress('Processing with Gemini AI... This may take a moment.');
       
       const result = await fetchWrapper.post(
-        `/api/companies/${companyId}/forms/${formId}/extract-pdf`,
+        `/api/forms/${formId}/extract-pdf`,
         formData
       );
 
@@ -160,7 +158,7 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     );
   }
 
-  if (!form || !company) {
+  if (!form) {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold">K-1 Form not found</h2>
@@ -172,15 +170,23 @@ export default function K1FormDetail({ companyId, formId }: Props) {
     );
   }
 
+  const companyName = interest?.owned_company?.name || 'Company';
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <a href="/" className="hover:text-foreground">Companies</a>
         <ChevronRight className="h-4 w-4" />
-        <a href={`/company/${companyId}`} className="hover:text-foreground">{company.name}</a>
-        <ChevronRight className="h-4 w-4" />
-        <span className="text-foreground">Tax Year {form.tax_year}</span>
+        {interest?.owner_company_id && (
+           <>
+             <a href={`/company/${interest.owner_company_id}`} className="hover:text-foreground">
+                {interest.owner_company?.name || 'Owner'}
+             </a>
+             <ChevronRight className="h-4 w-4" />
+           </>
+        )}
+        <span className="text-foreground">K-1: {companyName} ({form.tax_year})</span>
       </div>
 
       {/* Header */}
@@ -714,4 +720,3 @@ const CheckboxInput = ({
     <Label htmlFor={field} className="text-sm font-normal">{label}</Label>
   </div>
 );
-

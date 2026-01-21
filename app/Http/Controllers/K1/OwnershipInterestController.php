@@ -27,7 +27,7 @@ class OwnershipInterestController extends Controller
      */
     public function forCompany(K1Company $company): JsonResponse
     {
-        $interests = OwnershipInterest::with(['ownedCompany'])
+        $interests = OwnershipInterest::with(['ownedCompany', 'k1Forms'])
             ->where('owner_company_id', $company->id)
             ->orderBy('created_at', 'desc')
             ->get();

@@ -14,7 +14,7 @@ class K1Form extends Model
     protected $table = 'k1_forms';
 
     protected $fillable = [
-        'company_id',
+        'ownership_interest_id',
         'tax_year',
         'form_file_path',
         'form_file_name',
@@ -126,9 +126,9 @@ class K1Form extends Model
         'ending_capital_account' => 'decimal:2',
     ];
 
-    public function company(): BelongsTo
+    public function ownershipInterest(): BelongsTo
     {
-        return $this->belongsTo(K1Company::class, 'company_id');
+        return $this->belongsTo(OwnershipInterest::class, 'ownership_interest_id');
     }
 
     public function incomeSources(): HasMany

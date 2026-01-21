@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { K1Company, K1Form, OwnershipInterest } from '@/types/k1';
 import { formatCurrency, formatPercentage } from '@/lib/currency';
@@ -31,7 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, FileText, ChevronLeft, ChevronRight, Pencil, Trash2, Building2, Link2, Users } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Building2, Users, FileText, ArrowRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface Props {
   companyId: number;
@@ -39,15 +41,10 @@ interface Props {
 
 export default function CompanyDetail({ companyId }: Props) {
   const [company, setCompany] = useState<K1Company | null>(null);
-  const [forms, setForms] = useState<K1Form[]>([]);
   const [ownershipInterests, setOwnershipInterests] = useState<OwnershipInterest[]>([]);
   const [ownedByInterests, setOwnedByInterests] = useState<OwnershipInterest[]>([]);
   const [allCompanies, setAllCompanies] = useState<K1Company[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // K-1 form dialog
-  const [formDialogOpen, setFormDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ tax_year: new Date().getFullYear() - 1 });
   
   // Ownership interest dialog
   const [ownershipDialogOpen, setOwnershipDialogOpen] = useState(false);
@@ -58,81 +55,26 @@ export default function CompanyDetail({ companyId }: Props) {
   });
 
   useEffect(() => {
-    loadCompany();
-    loadForms();
-    loadOwnershipInterests();
-    loadOwnedByInterests();
-    loadAllCompanies();
+    loadData();
   }, [companyId]);
 
-  const loadCompany = async () => {
+  const loadData = async () => {
+    setLoading(true);
     try {
-      const data = await fetchWrapper.get(`/api/companies/${companyId}`);
-      setCompany(data);
+      const [comp, owned, ownedBy, all] = await Promise.all([
+        fetchWrapper.get(`/api/companies/${companyId}`),
+        fetchWrapper.get(`/api/companies/${companyId}/ownership-interests`), // Now includes k1Forms
+        fetchWrapper.get(`/api/companies/${companyId}/owned-by`),
+        fetchWrapper.get('/api/companies'),
+      ]);
+      setCompany(comp);
+      setOwnershipInterests(owned);
+      setOwnedByInterests(ownedBy);
+      setAllCompanies(all);
     } catch (error) {
-      console.error('Failed to load company:', error);
-    }
-  };
-
-  const loadForms = async () => {
-    try {
-      const data = await fetchWrapper.get(`/api/companies/${companyId}/forms`);
-      setForms(data);
-    } catch (error) {
-      console.error('Failed to load forms:', error);
+      console.error('Failed to load company data:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadOwnershipInterests = async () => {
-    try {
-      const data = await fetchWrapper.get(`/api/companies/${companyId}/ownership-interests`);
-      setOwnershipInterests(data);
-    } catch (error) {
-      console.error('Failed to load ownership interests:', error);
-    }
-  };
-
-  const loadOwnedByInterests = async () => {
-    try {
-      const data = await fetchWrapper.get(`/api/companies/${companyId}/owned-by`);
-      setOwnedByInterests(data);
-    } catch (error) {
-      console.error('Failed to load owned-by interests:', error);
-    }
-  };
-
-  const loadAllCompanies = async () => {
-    try {
-      const data = await fetchWrapper.get('/api/companies');
-      setAllCompanies(data);
-    } catch (error) {
-      console.error('Failed to load companies:', error);
-    }
-  };
-
-  const handleCreateForm = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const newForm = await fetchWrapper.post(`/api/companies/${companyId}/forms`, formData);
-      setFormDialogOpen(false);
-      // Navigate to the new form
-      window.location.href = `/company/${companyId}/k1/${newForm.id}`;
-    } catch (error) {
-      console.error('Failed to create form:', error);
-    }
-  };
-
-  const handleDeleteForm = async (formId: number) => {
-    if (!confirm('Are you sure you want to delete this K-1 form? All associated data will be deleted.')) {
-      return;
-    }
-    try {
-      await fetchWrapper.delete(`/api/companies/${companyId}/forms/${formId}`, {});
-      loadForms();
-    } catch (error) {
-      console.error('Failed to delete form:', error);
     }
   };
 
@@ -147,7 +89,9 @@ export default function CompanyDetail({ companyId }: Props) {
       });
       setOwnershipDialogOpen(false);
       setOwnershipFormData({ owned_company_id: '', ownership_percentage: '', ownership_class: '' });
-      loadOwnershipInterests();
+      // Reload interests to get the new one
+      const interests = await fetchWrapper.get(`/api/companies/${companyId}/ownership-interests`);
+      setOwnershipInterests(interests);
     } catch (error) {
       console.error('Failed to create ownership interest:', error);
     }
@@ -159,11 +103,66 @@ export default function CompanyDetail({ companyId }: Props) {
     }
     try {
       await fetchWrapper.delete(`/api/ownership-interests/${interestId}`, {});
-      loadOwnershipInterests();
+      // Reload interests
+      const interests = await fetchWrapper.get(`/api/companies/${companyId}/ownership-interests`);
+      setOwnershipInterests(interests);
     } catch (error) {
       console.error('Failed to delete ownership interest:', error);
     }
   };
+
+  const handleK1Click = async (interest: OwnershipInterest, year: number) => {
+    // Check if K1 exists
+    const existingForm = interest.k1_forms?.find(f => f.tax_year === year);
+    
+    if (existingForm) {
+      // Navigate to existing form
+      window.location.href = `/ownership/${interest.id}/k1/${existingForm.id}`;
+    } else {
+      // Create new K1
+      try {
+        const newForm = await fetchWrapper.post(`/api/ownership-interests/${interest.id}/k1s`, {
+          tax_year: year
+        });
+        window.location.href = `/ownership/${interest.id}/k1/${newForm.id}`;
+      } catch (error) {
+        console.error('Failed to create K1 form:', error);
+        alert('Failed to create K1 form. Please try again.');
+      }
+    }
+  };
+
+  // Grouping Logic
+  const { years, groupedByYear } = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const yearSet = new Set<number>();
+    
+    // Collect years from interests
+    ownershipInterests.forEach(interest => {
+      const startYear = interest.inception_basis_year || 
+                       (interest.effective_from ? new Date(interest.effective_from).getFullYear() : 2020);
+      
+      for (let y = startYear; y <= currentYear; y++) {
+        yearSet.add(y);
+      }
+    });
+
+    const sortedYears = Array.from(yearSet).sort((a, b) => b - a); // Descending
+
+    const grouped = sortedYears.map(year => ({
+      year,
+      interests: ownershipInterests.filter(interest => {
+         const startYear = interest.inception_basis_year || 
+                          (interest.effective_from ? new Date(interest.effective_from).getFullYear() : 2020);
+         // Filter logic: assume interest is active if year >= startYear
+         // Could also check effective_to if we had it populated strictly
+         return year >= startYear;
+      })
+    }));
+
+    return { years: sortedYears, groupedByYear: grouped };
+  }, [ownershipInterests]);
+
 
   if (loading) {
     return (
@@ -185,7 +184,6 @@ export default function CompanyDetail({ companyId }: Props) {
     );
   }
 
-  // Filter out the current company from the list of available companies to own
   const availableCompaniesToOwn = allCompanies.filter(c => c.id !== companyId);
 
   return (
@@ -205,317 +203,282 @@ export default function CompanyDetail({ companyId }: Props) {
             {company.ein && <span className="font-mono">EIN: {company.ein}</span>}
             {company.entity_type && <span>{company.entity_type}</span>}
           </div>
-          {(company.address || company.city) && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {[company.address, company.city, company.state, company.zip].filter(Boolean).join(', ')}
-            </p>
-          )}
         </div>
+        <Dialog open={ownershipDialogOpen} onOpenChange={setOwnershipDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Ownership Interest
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <form onSubmit={handleCreateOwnership}>
+              <DialogHeader>
+                <DialogTitle>Add Ownership Interest</DialogTitle>
+                <DialogDescription>
+                  Add a partnership or entity that this company owns
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="owned_company">Entity Owned *</Label>
+                  <Select
+                    value={ownershipFormData.owned_company_id}
+                    onValueChange={(value) => setOwnershipFormData(prev => ({ ...prev, owned_company_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a company..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCompaniesToOwn.map((c) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>
+                          {c.name} {c.ein ? `(${c.ein})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="ownership_percentage">Ownership % *</Label>
+                  <Input
+                    id="ownership_percentage"
+                    type="number"
+                    step="0.00000000001"
+                    min="0"
+                    max="100"
+                    placeholder="e.g., 25.5"
+                    value={ownershipFormData.ownership_percentage}
+                    onChange={(e) => setOwnershipFormData(prev => ({ ...prev, ownership_percentage: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="ownership_class">Class (optional)</Label>
+                  <Input
+                    id="ownership_class"
+                    placeholder="e.g., Class A, Common"
+                    value={ownershipFormData.ownership_class}
+                    onChange={(e) => setOwnershipFormData(prev => ({ ...prev, ownership_class: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setOwnershipDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={!ownershipFormData.owned_company_id || !ownershipFormData.ownership_percentage}>
+                  Add Interest
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* K-1 Forms Column */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <div>
-              <CardTitle>K-1 Forms by Tax Year</CardTitle>
-              <CardDescription>
-                Schedule K-1 forms showing partner's share of income
-              </CardDescription>
-            </div>
-            <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add K-1
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <form onSubmit={handleCreateForm}>
-                  <DialogHeader>
-                    <DialogTitle>Add K-1 Form</DialogTitle>
-                    <DialogDescription>
-                      Create a new K-1 form for a tax year
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="tax_year">Tax Year *</Label>
-                      <Input
-                        id="tax_year"
-                        type="number"
-                        min="1900"
-                        max="2100"
-                        value={formData.tax_year}
-                        onChange={(e) => setFormData({ tax_year: parseInt(e.target.value) })}
-                        required
-                      />
+      <Tabs defaultValue="year" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="year">Group by Year</TabsTrigger>
+          <TabsTrigger value="interest">Group by Ownership Interest</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="year" className="space-y-6">
+          {groupedByYear.map(({ year, interests }) => (
+            <Card key={year}>
+              <CardHeader className="py-4">
+                <CardTitle className="text-lg font-medium">Tax Year {year}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ownership Interest (Entity)</TableHead>
+                      <TableHead className="text-right">Ownership %</TableHead>
+                      <TableHead className="w-[200px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {interests.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground">
+                          No active ownership interests for this year.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      interests.map((interest) => {
+                        const hasK1 = interest.k1_forms?.some(f => f.tax_year === year);
+                        return (
+                          <TableRow key={interest.id}>
+                            <TableCell className="font-medium">
+                              {interest.owned_company?.name || 'Unknown Entity'}
+                            </TableCell>
+                            <TableCell className="text-right font-mono">
+                              {formatPercentage(interest.ownership_percentage)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => window.location.href = `/ownership/${interest.id}`}
+                                >
+                                  Details
+                                </Button>
+                                <Button
+                                  variant={hasK1 ? "secondary" : "default"}
+                                  size="sm"
+                                  onClick={() => handleK1Click(interest, year)}
+                                >
+                                  {hasK1 ? (
+                                    <>
+                                      <FileText className="h-4 w-4 mr-2" />
+                                      View K-1
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Add K-1
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          ))}
+          {groupedByYear.length === 0 && (
+             <div className="text-center py-8 text-muted-foreground">
+               No ownership interests found. Add one to see years.
+             </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="interest" className="space-y-6">
+          {ownershipInterests.map((interest) => {
+             const startYear = interest.inception_basis_year || 
+                              (interest.effective_from ? new Date(interest.effective_from).getFullYear() : 2020);
+             const currentYear = new Date().getFullYear();
+             const interestYears = [];
+             for (let y = currentYear; y >= startYear; y--) {
+               interestYears.push(y);
+             }
+
+             return (
+              <Card key={interest.id}>
+                <CardHeader className="py-4 flex flex-row items-center justify-between space-y-0">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <CardTitle className="text-lg font-medium">
+                        {interest.owned_company?.name || 'Unknown Entity'}
+                      </CardTitle>
+                      <CardDescription>
+                        {formatPercentage(interest.ownership_percentage)} Ownership
+                      </CardDescription>
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setFormDialogOpen(false)}>
-                      Cancel
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.location.href = `/ownership/${interest.id}`}
+                    >
+                      Full Details <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
-                    <Button type="submit">Create K-1</Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </CardHeader>
-          <CardContent>
-            {forms.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <FileText className="h-10 w-10 text-muted-foreground mb-3" />
-                <h3 className="text-sm font-semibold mb-1">No K-1 forms yet</h3>
-                <p className="text-xs text-muted-foreground text-center mb-3">
-                  Add your first K-1 form to start tracking
-                </p>
-                <Button size="sm" onClick={() => setFormDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add K-1
-                </Button>
-              </div>
-            ) : (
-              <Table>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteOwnership(interest.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tax Year</TableHead>
+                        <TableHead className="text-right">K-1 Status</TableHead>
+                        <TableHead className="w-[150px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {interestYears.map(year => {
+                         const k1 = interest.k1_forms?.find(f => f.tax_year === year);
+                         return (
+                           <TableRow key={year}>
+                             <TableCell className="font-medium">{year}</TableCell>
+                             <TableCell className="text-right">
+                               {k1 ? (
+                                 <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                                   Recorded
+                                 </Badge>
+                               ) : (
+                                 <Badge variant="outline" className="text-muted-foreground">
+                                   Missing
+                                 </Badge>
+                               )}
+                             </TableCell>
+                             <TableCell>
+                               <Button
+                                  variant={k1 ? "secondary" : "default"}
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => handleK1Click(interest, year)}
+                                >
+                                  {k1 ? 'View K-1' : 'Add K-1'}
+                                </Button>
+                             </TableCell>
+                           </TableRow>
+                         );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            );
+          })}
+          {ownershipInterests.length === 0 && (
+             <div className="text-center py-8 text-muted-foreground">
+               No ownership interests found.
+             </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Owned By Section (Secondary) */}
+      <div className="mt-12 pt-8 border-t">
+         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Shareholders / Owners of {company.name}
+         </h3>
+         <Card>
+           <CardContent className="p-0">
+             <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tax Year</TableHead>
-                    <TableHead className="text-right">Ordinary Income</TableHead>
-                    <TableHead className="text-right">Profit %</TableHead>
-                    <TableHead className="w-[80px]">Actions</TableHead>
+                    <TableHead>Owner</TableHead>
+                    <TableHead className="text-right">Ownership %</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead className="w-[120px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {forms.map((form) => (
-                    <TableRow key={form.id}>
-                      <TableCell>
-                        <a
-                          href={`/company/${companyId}/k1/${form.id}`}
-                          className="font-medium hover:underline flex items-center"
-                        >
-                          {form.tax_year}
-                          <ChevronRight className="ml-1 h-4 w-4" />
-                        </a>
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {formatCurrency(form.box_1_ordinary_income)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        {formatPercentage(form.share_of_profit_ending)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => window.location.href = `/company/${companyId}/k1/${form.id}`}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDeleteForm(form.id)}
-                          >
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Ownership Structure Column */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <div>
-              <CardTitle>Ownership Structure</CardTitle>
-              <CardDescription>
-                Ownership hierarchy and relationships
-              </CardDescription>
-            </div>
-            <Dialog open={ownershipDialogOpen} onOpenChange={setOwnershipDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Interest
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <form onSubmit={handleCreateOwnership}>
-                  <DialogHeader>
-                    <DialogTitle>Add Ownership Interest</DialogTitle>
-                    <DialogDescription>
-                      Add a partnership or entity that this company owns
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="owned_company">Entity Owned *</Label>
-                      <Select
-                        value={ownershipFormData.owned_company_id}
-                        onValueChange={(value) => setOwnershipFormData(prev => ({ ...prev, owned_company_id: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a company..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableCompaniesToOwn.map((c) => (
-                            <SelectItem key={c.id} value={c.id.toString()}>
-                              {c.name} {c.ein ? `(${c.ein})` : ''}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="ownership_percentage">Ownership % *</Label>
-                      <Input
-                        id="ownership_percentage"
-                        type="number"
-                        step="0.00000000001"
-                        min="0"
-                        max="100"
-                        placeholder="e.g., 25.5"
-                        value={ownershipFormData.ownership_percentage}
-                        onChange={(e) => setOwnershipFormData(prev => ({ ...prev, ownership_percentage: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="ownership_class">Class (optional)</Label>
-                      <Input
-                        id="ownership_class"
-                        placeholder="e.g., Class A, Common"
-                        value={ownershipFormData.ownership_class}
-                        onChange={(e) => setOwnershipFormData(prev => ({ ...prev, ownership_class: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setOwnershipDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={!ownershipFormData.owned_company_id || !ownershipFormData.ownership_percentage}>
-                      Add Interest
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            {/* Ownership Interests List */}
-            <div>
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Ownership Interests
-                <span className="text-xs font-normal text-muted-foreground ml-2">
-                  (Entities owned by {company.name})
-                </span>
-              </h3>
-              
-              {ownershipInterests.length === 0 ? (
-                <div className="text-sm text-muted-foreground italic pl-6">
-                  No ownership interests recorded.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
+                  {ownedByInterests.length === 0 ? (
                     <TableRow>
-                      <TableHead>Entity</TableHead>
-                      <TableHead className="text-right">Ownership %</TableHead>
-                      <TableHead>Class</TableHead>
-                      <TableHead className="w-[180px]">Actions</TableHead>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                        No owners recorded.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {ownershipInterests.map((interest) => (
-                      <TableRow key={interest.id}>
-                        <TableCell>
-                          <span className="font-medium">
-                            {interest.owned_company?.name ?? 'Unknown'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm">
-                          {formatPercentage(interest.ownership_percentage)}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {interest.ownership_class || '—'}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {interest.owned_company && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 px-2"
-                                title="Go to company"
-                                onClick={() => window.location.href = `/company/${interest.owned_company!.id}`}
-                              >
-                                Company
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2"
-                              title="View details"
-                              onClick={() => window.location.href = `/ownership/${interest.id}`}
-                            >
-                              Details
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              title="Delete"
-                              onClick={() => handleDeleteOwnership(interest.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-
-            {/* Owned By List */}
-            <div>
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Owned By
-                <span className="text-xs font-normal text-muted-foreground ml-2">
-                  (Entities that own {company.name})
-                </span>
-              </h3>
-
-              {ownedByInterests.length === 0 ? (
-                <div className="text-sm text-muted-foreground italic pl-6">
-                  No owners recorded.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Owner</TableHead>
-                      <TableHead className="text-right">Ownership %</TableHead>
-                      <TableHead>Class</TableHead>
-                      <TableHead className="w-[120px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {ownedByInterests.map((interest) => (
+                  ) : (
+                    ownedByInterests.map((interest) => (
                       <TableRow key={interest.id}>
                         <TableCell>
                           {interest.owner_company ? (
@@ -526,32 +489,30 @@ export default function CompanyDetail({ companyId }: Props) {
                             <span className="text-muted-foreground">Individual Owner</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-mono text-sm">
+                        <TableCell className="text-right font-mono">
                           {formatPercentage(interest.ownership_percentage)}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="text-muted-foreground">
                           {interest.ownership_class || '—'}
                         </TableCell>
                         <TableCell>
                           {interest.owner_company && (
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
-                              className="h-8 px-2"
                               onClick={() => window.location.href = `/company/${interest.owner_company!.id}`}
                             >
-                              Go to owner
+                              View
                             </Button>
                           )}
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                    ))
+                  )}
+                </TableBody>
+             </Table>
+           </CardContent>
+         </Card>
       </div>
     </div>
   );

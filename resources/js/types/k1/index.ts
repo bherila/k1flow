@@ -18,7 +18,7 @@ export interface K1Company {
 // K1 Form (Schedule K-1)
 export interface K1Form {
   id: number;
-  company_id: number;
+  ownership_interest_id: number;
   tax_year: number;
   form_file_path: string | null;
   form_file_name: string | null;
@@ -106,7 +106,7 @@ export interface K1Form {
   updated_at: string;
   
   // Relations
-  company?: K1Company;
+  ownership_interest?: OwnershipInterest;
   income_sources?: K1IncomeSource[];
 }
 
@@ -159,6 +159,7 @@ export interface OwnershipInterest {
   outside_basis?: OutsideBasis[];
   loss_limitations?: LossLimitation[];
   loss_carryforwards?: LossCarryforward[];
+  k1_forms?: K1Form[];
 }
 
 // Outside Basis - now linked to OwnershipInterest + tax_year

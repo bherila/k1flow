@@ -13,8 +13,8 @@ Route::get('/company/{id}', function ($id) {
 });
 
 // K-1 Form detail/edit view
-Route::get('/company/{companyId}/k1/{formId}', function ($companyId, $formId) {
-    return view('k1-form', ['companyId' => $companyId, 'formId' => $formId]);
+Route::get('/ownership/{interestId}/k1/{formId}', function ($interestId, $formId) {
+    return view('k1-form', ['interestId' => $interestId, 'formId' => $formId]);
 });
 
 // Ownership Interest detail view (includes outside basis and loss limitations)

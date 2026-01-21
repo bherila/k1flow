@@ -21,14 +21,6 @@ class K1Company extends Model
     ];
 
     /**
-     * Get all K-1 forms for this company.
-     */
-    public function k1Forms(): HasMany
-    {
-        return $this->hasMany(K1Form::class, 'company_id');
-    }
-
-    /**
      * Get ownership interests where this company is the owner (investor).
      * These are partnerships/S-corps that this company owns.
      */

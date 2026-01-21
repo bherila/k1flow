@@ -110,4 +110,20 @@ class OwnershipInterest extends Model
     {
         return $this->hasMany(LossCarryforward::class, 'ownership_interest_id');
     }
+
+    /**
+     * Get all K-1 forms for this ownership interest.
+     */
+    public function k1Forms(): HasMany
+    {
+        return $this->hasMany(K1Form::class, 'ownership_interest_id');
+    }
+
+    /**
+     * Get K-1 form for a specific tax year.
+     */
+    public function k1FormForYear(int $taxYear): ?K1Form
+    {
+        return $this->k1Forms()->where('tax_year', $taxYear)->first();
+    }
 }

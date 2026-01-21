@@ -3,20 +3,21 @@
 namespace App\Http\Controllers\K1;
 
 use App\Http\Controllers\Controller;
-use App\Models\K1\K1Company;
 use App\Models\K1\K1Form;
+use App\Models\K1\OwnershipInterest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class K1FormController extends Controller
 {
     /**
-     * Display a listing of K-1 forms for a company.
+     * Display a listing of K-1 forms for an ownership interest.
      */
-    public function index(K1Company $company): JsonResponse
+    public function index(OwnershipInterest $interest): JsonResponse
     {
-        $forms = $company->k1Forms()
+        $forms = $interest->k1Forms()
             ->orderBy('tax_year', 'desc')
             ->get();
 
@@ -24,12 +25,20 @@ class K1FormController extends Controller
     }
 
     /**
-     * Store a newly created K-1 form.
+     * Store a newly created K-1 form for an ownership interest.
      */
-    public function store(Request $request, K1Company $company): JsonResponse
+    public function store(Request $request, OwnershipInterest $interest): JsonResponse
     {
         $validated = $request->validate([
-            'tax_year' => 'required|integer|min:1900|max:2100|unique:k1_forms,tax_year,NULL,id,company_id,' . $company->id,
+            'tax_year' => [
+                'required',
+                'integer',
+                'min:1900',
+                'max:2100',
+                Rule::unique('k1_forms')->where(function ($query) use ($interest) {
+                    return $query->where('ownership_interest_id', $interest->id);
+                }),
+            ],
             // Part I
             'partnership_name' => 'nullable|string|max:255',
             'partnership_address' => 'nullable|string|max:500',
@@ -105,7 +114,7 @@ class K1FormController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $validated['company_id'] = $company->id;
+        $validated['ownership_interest_id'] = $interest->id;
         
         // Default tax year begin/end if not provided
         if (empty($validated['partnership_tax_year_begin'])) {
@@ -123,14 +132,9 @@ class K1FormController extends Controller
     /**
      * Display the specified K-1 form.
      */
-    public function show(K1Company $company, K1Form $form): JsonResponse
+    public function show(K1Form $form): JsonResponse
     {
-        // Ensure the form belongs to the company
-        if ($form->company_id !== $company->id) {
-            abort(404);
-        }
-
-        $form->load(['incomeSources']);
+        $form->load(['incomeSources', 'ownershipInterest.ownedCompany']);
 
         return response()->json($form);
     }
@@ -138,14 +142,19 @@ class K1FormController extends Controller
     /**
      * Update the specified K-1 form.
      */
-    public function update(Request $request, K1Company $company, K1Form $form): JsonResponse
+    public function update(Request $request, K1Form $form): JsonResponse
     {
-        if ($form->company_id !== $company->id) {
-            abort(404);
-        }
-
         $validated = $request->validate([
-            'tax_year' => 'sometimes|required|integer|min:1900|max:2100|unique:k1_forms,tax_year,' . $form->id . ',id,company_id,' . $company->id,
+            'tax_year' => [
+                'sometimes',
+                'required',
+                'integer',
+                'min:1900',
+                'max:2100',
+                Rule::unique('k1_forms')->where(function ($query) use ($form) {
+                    return $query->where('ownership_interest_id', $form->ownership_interest_id);
+                })->ignore($form->id),
+            ],
             // All other fields same as store...
             'partnership_name' => 'nullable|string|max:255',
             'partnership_address' => 'nullable|string|max:500',
@@ -224,12 +233,8 @@ class K1FormController extends Controller
     /**
      * Remove the specified K-1 form.
      */
-    public function destroy(K1Company $company, K1Form $form): JsonResponse
+    public function destroy(K1Form $form): JsonResponse
     {
-        if ($form->company_id !== $company->id) {
-            abort(404);
-        }
-
         $form->delete();
 
         return response()->json(null, 204);
@@ -238,18 +243,15 @@ class K1FormController extends Controller
     /**
      * Upload a K-1 form PDF.
      */
-    public function uploadForm(Request $request, K1Company $company, K1Form $form): JsonResponse
+    public function uploadForm(Request $request, K1Form $form): JsonResponse
     {
-        if ($form->company_id !== $company->id) {
-            abort(404);
-        }
-
         $request->validate([
             'file' => 'required|file|mimes:pdf|max:10240',
         ]);
 
         $file = $request->file('file');
-        $path = $file->store("k1-forms/{$company->id}/{$form->tax_year}", 'private');
+        // Use ownership_interest_id in path
+        $path = $file->store("k1-forms/{$form->ownership_interest_id}/{$form->tax_year}", 'private');
 
         // Delete old file if exists
         if ($form->form_file_path) {
@@ -270,12 +272,8 @@ class K1FormController extends Controller
     /**
      * Extract K-1 data from an uploaded PDF using Gemini API.
      */
-    public function extractFromPdf(Request $request, K1Company $company, K1Form $form): JsonResponse
+    public function extractFromPdf(Request $request, K1Form $form): JsonResponse
     {
-        if ($form->company_id !== $company->id) {
-            abort(404);
-        }
-
         $request->validate([
             'pdf' => 'required|file|mimes:pdf|max:10240',
         ]);
@@ -430,7 +428,7 @@ PROMPT;
             $extractedData = array_filter($extractedData, fn($v) => $v !== null);
 
             // Also save the uploaded PDF
-            $path = $file->store("k1-forms/{$company->id}/{$form->tax_year}", 'private');
+            $path = $file->store("k1-forms/{$form->ownership_interest_id}/{$form->tax_year}", 'private');
             if ($form->form_file_path) {
                 Storage::disk('private')->delete($form->form_file_path);
             }

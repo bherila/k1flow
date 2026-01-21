@@ -2,7 +2,7 @@
 
 @section('content')
   <div id="k1-form-detail" 
-    data-company-id="{{ $companyId }}" 
+    data-interest-id="{{ $interestId }}" 
     data-form-id="{{ $formId }}"
   ></div>
 @endsection
