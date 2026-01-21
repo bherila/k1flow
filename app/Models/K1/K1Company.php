@@ -4,6 +4,7 @@ namespace App\Models\K1;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class K1Company extends Model
 {
@@ -33,8 +34,18 @@ class K1Company extends Model
      * Get ownership interests where this company is owned (the entity being invested in).
      * These represent who owns this company.
      */
-    public function ownedBy(): HasMany
+    /**
+     * Get all K-1 forms issued by this company (via ownership interests).
+     */
+    public function k1Forms(): HasManyThrough
     {
-        return $this->hasMany(OwnershipInterest::class, 'owned_company_id');
+        return $this->hasManyThrough(
+            K1Form::class,
+            OwnershipInterest::class,
+            'owned_company_id', // Foreign key on ownership_interests table...
+            'ownership_interest_id', // Foreign key on k1_forms table...
+            'id', // Local key on k1_companies table...
+            'id' // Local key on ownership_interests table...
+        );
     }
 }

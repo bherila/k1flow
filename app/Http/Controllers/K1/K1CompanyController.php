@@ -47,10 +47,6 @@ class K1CompanyController extends Controller
      */
     public function show(K1Company $company): JsonResponse
     {
-        $company->load(['k1Forms' => function ($query) {
-            $query->orderBy('tax_year', 'desc');
-        }]);
-
         return response()->json($company);
     }
 
