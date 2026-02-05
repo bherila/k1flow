@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { LossCarryforward } from '@/types/k1';

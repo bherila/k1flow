@@ -1,4 +1,4 @@
-import * as React from 'react';
+// React namespace not required; using named imports when needed
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 

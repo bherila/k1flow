@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import type { ChangeEvent } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { K1Form, K1Company, OwnershipInterest } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';
@@ -103,7 +103,7 @@ export default function K1FormDetail({ interestId, formId }: Props) {
   };
 
   // PDF upload handler
-  const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 

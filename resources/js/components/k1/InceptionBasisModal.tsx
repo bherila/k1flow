@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useState, useEffect } from 'react';
 import type { OwnershipInterest, MethodOfAcquisition } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';

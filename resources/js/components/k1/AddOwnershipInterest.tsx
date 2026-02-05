@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { K1Company, OwnershipInterest, MethodOfAcquisition } from '@/types/k1';
 import { Button } from '@/components/ui/button';
@@ -68,7 +68,7 @@ export default function AddOwnershipInterest({ ownerCompanyId, availableCompanie
     inception_basis_total: null,
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
       await fetchWrapper.post('/api/ownership-interests', {

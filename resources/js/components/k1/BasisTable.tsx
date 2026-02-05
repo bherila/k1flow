@@ -1,4 +1,3 @@
-import * as React from 'react';
 import type { BasisWalkYear, ObAdjustment } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';
 import {

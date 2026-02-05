@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { OwnershipInterest, K1Company } from '@/types/k1';

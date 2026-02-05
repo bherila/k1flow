@@ -1,4 +1,4 @@
-import * as React from 'react';
+// React namespace not required; using named imports when needed
 import { useState, useEffect, useCallback } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { 

@@ -1,4 +1,4 @@
-import * as React from 'react';
+// React namespace not required; using named imports when needed
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { BasisWalkYear, LossLimitation } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';

@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { K1Company } from '@/types/k1';
 import { Button } from '@/components/ui/button';
@@ -64,7 +64,7 @@ export function CompanyAddOrEditDialog({
     }
   }, [company, open]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
       if (company) {

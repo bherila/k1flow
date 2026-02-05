@@ -1,21 +1,9 @@
-import * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { fetchWrapper } from '@/fetchWrapper';
-import type { K1Company, K1Form, OwnershipInterest } from '@/types/k1';
-import { formatCurrency, formatPercentage } from '@/lib/currency';
+import type { K1Company, OwnershipInterest } from '@/types/k1';
+import { formatPercentage } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -24,15 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Building2, Users, FileText, ArrowRight } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Trash2, Building2, Users, FileText, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import AddOwnershipInterest from './AddOwnershipInterest';
 
