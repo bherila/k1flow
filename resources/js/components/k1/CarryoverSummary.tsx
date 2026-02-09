@@ -1,8 +1,9 @@
 // React namespace not required; using named imports when needed
-import type { BasisWalkYear } from '@/types/k1';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Info } from 'lucide-react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/currency';
+import type { BasisWalkYear } from '@/types/k1';
 
 interface Props {
   years: number[];

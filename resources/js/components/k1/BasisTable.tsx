@@ -1,5 +1,10 @@
-import type { BasisWalkYear, ObAdjustment } from '@/types/k1';
-import { formatCurrency } from '@/lib/currency';
+import { AlertCircle,ChevronRight } from 'lucide-react';
+
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Table,
   TableBody,
@@ -8,12 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { ChevronRight, AlertCircle } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
+import type { BasisWalkYear, ObAdjustment } from '@/types/k1';
 
 const INCREASE_LABELS: Record<string, string> = {
   cash_contribution: 'Cash contributions',

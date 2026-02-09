@@ -1,9 +1,11 @@
 import './bootstrap';
-import MainTitle from '@/components/MainTitle';
+
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
 import CompanyList from '@/components/k1/CompanyList';
 import OwnershipGraph from '@/components/k1/OwnershipGraph';
-import { createRoot } from 'react-dom/client';
-import React from 'react';
+import MainTitle from '@/components/MainTitle';
 
 function Home() {
   return (

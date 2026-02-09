@@ -1,6 +1,7 @@
-import { createRoot } from 'react-dom/client';
-import OwnershipBasisDetail from './components/k1/OwnershipBasisDetail';
 import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+import OwnershipBasisDetail from './components/k1/OwnershipBasisDetail';
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
   constructor(props: { children: React.ReactNode }) {

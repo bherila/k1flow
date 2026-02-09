@@ -1,10 +1,7 @@
-import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import { fetchWrapper } from '@/fetchWrapper';
-import type { K1Company } from '@/types/k1';
+import { useEffect,useState } from 'react';
+
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { fetchWrapper } from '@/fetchWrapper';
+import type { K1Company } from '@/types/k1';
 
 interface CompanyAddOrEditDialogProps {
   open: boolean;

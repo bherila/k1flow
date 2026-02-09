@@ -1,7 +1,8 @@
 // React namespace not required; using named imports when needed
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, ChevronLeft } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Props {
   interestId: number;

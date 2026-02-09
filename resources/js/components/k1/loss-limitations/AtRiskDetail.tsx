@@ -1,15 +1,17 @@
 // React namespace not required; using named imports when needed
-import { useState, useEffect } from 'react';
-import { fetchWrapper } from '@/fetchWrapper';
-import type { LossLimitation, OwnershipInterest } from '@/types/k1';
+import { Copy,Loader2 } from 'lucide-react';
+import { useEffect,useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, Loader2, Save, ArrowLeft, Copy } from 'lucide-react';
+import { fetchWrapper } from '@/fetchWrapper';
 import { formatCurrency } from '@/lib/currency';
-import { LossLimitationTabs } from '../LossLimitationTabs';
+import type { LossLimitation, OwnershipInterest } from '@/types/k1';
+
 import { GoToButton } from '../GoToButton';
+import { LossLimitationTabs } from '../LossLimitationTabs';
 
 interface Props {
   interestId: number;

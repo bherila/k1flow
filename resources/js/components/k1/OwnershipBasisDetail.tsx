@@ -1,18 +1,11 @@
 // React namespace not required; using named imports when needed
-import { useState, useEffect, useCallback } from 'react';
-import { fetchWrapper } from '@/fetchWrapper';
-import type { 
-  OwnershipInterest, 
-  OutsideBasis, 
-  ObAdjustment,
-  AdjustmentCategory,
-} from '@/types/k1';
-import { formatCurrency } from '@/lib/currency';
+import { FileText, Loader2, Plus, Trash2, Upload } from 'lucide-react';
+import { useCallback,useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -20,7 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, Plus, Trash2, Loader2, FileText, Upload } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { fetchWrapper } from '@/fetchWrapper';
+import { formatCurrency } from '@/lib/currency';
+import type { 
+  AdjustmentCategory,
+  ObAdjustment,
+  OutsideBasis, 
+  OwnershipInterest, 
+} from '@/types/k1';
+
 import { LossLimitationTabs } from './LossLimitationTabs';
 
 const INCREASE_LABELS: Record<string, string> = {

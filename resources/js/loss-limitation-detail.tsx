@@ -1,9 +1,10 @@
-import { createRoot } from 'react-dom/client';
 import React from 'react';
+import { createRoot } from 'react-dom/client';
+
 import AtRiskDetail from './components/k1/loss-limitations/AtRiskDetail';
-import PassiveActivityDetail from './components/k1/loss-limitations/PassiveActivityDetail';
 import ExcessBusinessLossDetail from './components/k1/loss-limitations/ExcessBusinessLossDetail';
 import NetOperatingLossDetail from './components/k1/loss-limitations/NetOperatingLossDetail';
+import PassiveActivityDetail from './components/k1/loss-limitations/PassiveActivityDetail';
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
   constructor(props: { children: React.ReactNode }) {

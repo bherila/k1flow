@@ -1,16 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useCallback,useEffect, useState } from 'react';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { 
   BasisWalkResponse, 
   BasisWalkYear, 
   ObAdjustment,
 } from '@/types/k1';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+
 import BasisTable from './BasisTable';
 import CarryoverSummary from './CarryoverSummary';
-import LossLimitationTable from './LossLimitationTable';
 import LossCarryforwardCard from './LossCarryforwardCard';
+import LossLimitationTable from './LossLimitationTable';
 
 // Local copies of the labels
 const INCREASE_LABELS: Record<string, string> = {

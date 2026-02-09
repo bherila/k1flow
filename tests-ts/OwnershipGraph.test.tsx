@@ -1,8 +1,9 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import mermaid from 'mermaid';
+import React from 'react';
+
 import OwnershipGraph from '@/components/k1/OwnershipGraph';
 import { fetchWrapper } from '@/fetchWrapper';
-import mermaid from 'mermaid';
 
 // Mock the fetchWrapper
 jest.mock('@/fetchWrapper', () => ({

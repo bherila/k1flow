@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo, useRef, useId } from 'react';
-import { fetchWrapper } from '@/fetchWrapper';
-import type { K1Company, OwnershipInterest } from '@/types/k1';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { GitBranch } from 'lucide-react';
 import mermaid from 'mermaid';
+import { useEffect, useId,useMemo, useRef, useState } from 'react';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { fetchWrapper } from '@/fetchWrapper';
+import type { K1Company, OwnershipInterest } from '@/types/k1';
 
 // Initialize mermaid once
 mermaid.initialize({

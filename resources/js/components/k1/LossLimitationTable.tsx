@@ -1,8 +1,8 @@
 // React namespace not required; using named imports when needed
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { BasisWalkYear, LossLimitation } from '@/types/k1';
 import { formatCurrency } from '@/lib/currency';
-import { ChevronRight } from 'lucide-react';
+import type { BasisWalkYear, LossLimitation } from '@/types/k1';
 
 interface Props {
   interestId: number;

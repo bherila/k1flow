@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { fetchWrapper } from '@/fetchWrapper';
-import type { LossCarryforward } from '@/types/k1';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
+import { useCallback,useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -13,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { fetchWrapper } from '@/fetchWrapper';
+import type { LossCarryforward } from '@/types/k1';
 
 interface Props {
   interestId: number;

@@ -1,6 +1,7 @@
-import { createRoot } from 'react-dom/client';
-import OwnershipInterestDetail from './components/k1/OwnershipInterestDetail';
 import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+import OwnershipInterestDetail from './components/k1/OwnershipInterestDetail';
 
 console.log('[OwnershipInterest] Script loaded');
 

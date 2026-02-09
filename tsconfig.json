@@ -47,5 +47,5 @@
       "@/*": ["resources/js/*"]
     }
   },
-  "include": ["resources/js", "tests-ts"]
+  "include": ["resources/js", "tests-ts", "tailwind.config.ts", "vite.config.ts"]
 }

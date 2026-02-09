@@ -1,5 +1,5 @@
+import {Laptop, Moon, Sun } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Laptop, Moon, Sun, ChevronDown } from 'lucide-react';
 
 type NavbarProps = {
   authenticated: boolean;

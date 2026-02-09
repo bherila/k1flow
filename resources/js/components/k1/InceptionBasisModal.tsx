@@ -1,10 +1,7 @@
-import { useState, useEffect } from 'react';
-import type { OwnershipInterest, MethodOfAcquisition } from '@/types/k1';
-import { formatCurrency } from '@/lib/currency';
+import { Edit2,Loader2 } from 'lucide-react';
+import { useEffect,useState } from 'react';
+
 import { Button } from '@/components/ui/button';
-import { DateHelper } from '@/lib/DateHelper';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -21,7 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Edit2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
+import { DateHelper } from '@/lib/DateHelper';
+import type { MethodOfAcquisition,OwnershipInterest } from '@/types/k1';
 
 interface InceptionBasisData {
   inception_date: string | null;

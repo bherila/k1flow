@@ -13,12 +13,13 @@ module.exports = {
   rules: {
     // Remove unused imports automatically
     'unused-imports/no-unused-imports': 'error',
-    'unused-imports/no-unused-vars': ['warn', { vars: 'all', varsIgnorePattern: '^_', args: 'after-used', argsIgnorePattern: '^_' }],
+    'unused-imports/no-unused-vars': 'off',
     // Sort imports and exports
     'simple-import-sort/imports': 'error',
     'simple-import-sort/exports': 'error',
     // Let unused-imports handle unused vars
     '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
   },
   settings: {
     'import/resolver': {

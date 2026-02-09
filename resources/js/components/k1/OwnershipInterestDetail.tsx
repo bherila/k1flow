@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { fetchWrapper } from '@/fetchWrapper';
-import type { OwnershipInterest, K1Company } from '@/types/k1';
-import { formatCurrency } from '@/lib/currency';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import {useEffect, useRef, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { fetchWrapper } from '@/fetchWrapper';
+import { formatCurrency } from '@/lib/currency';
+import type { K1Company,OwnershipInterest } from '@/types/k1';
+
 import BasisWalk from './BasisWalk';
 import InceptionBasisModal from './InceptionBasisModal';
 

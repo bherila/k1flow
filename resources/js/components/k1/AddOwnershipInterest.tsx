@@ -1,10 +1,8 @@
-import { useState } from 'react';
+import { Plus } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { fetchWrapper } from '@/fetchWrapper';
-import type { K1Company, OwnershipInterest, MethodOfAcquisition } from '@/types/k1';
+import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +12,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -21,8 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from 'lucide-react';
+import { fetchWrapper } from '@/fetchWrapper';
 import { formatCurrency } from '@/lib/currency';
+import type { K1Company, MethodOfAcquisition } from '@/types/k1';
+
 import InceptionBasisModal from './InceptionBasisModal';
 
 interface Props {

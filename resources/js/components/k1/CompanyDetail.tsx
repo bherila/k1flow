@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
-import { fetchWrapper } from '@/fetchWrapper';
-import type { K1Company, OwnershipInterest } from '@/types/k1';
-import { formatPercentage } from '@/lib/currency';
+import { ArrowRight,Building2, ChevronLeft, ChevronRight, FileText, Plus, Trash2, Users } from 'lucide-react';
+import { useEffect, useMemo,useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,8 +13,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, ChevronLeft, ChevronRight, Trash2, Building2, Users, FileText, ArrowRight } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { fetchWrapper } from '@/fetchWrapper';
+import { formatPercentage } from '@/lib/currency';
+import type { K1Company, OwnershipInterest } from '@/types/k1';
+
 import AddOwnershipInterest from './AddOwnershipInterest';
 
 interface Props {

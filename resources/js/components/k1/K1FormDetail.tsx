@@ -1,17 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, FileUp, Loader2,Save } from 'lucide-react';
 import type { ChangeEvent } from 'react';
-import { fetchWrapper } from '@/fetchWrapper';
-import type { K1Form, K1Company, OwnershipInterest } from '@/types/k1';
-import { formatCurrency } from '@/lib/currency';
+import { useCallback,useEffect, useRef, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight, Save, Upload, FileUp, Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { fetchWrapper } from '@/fetchWrapper';
+import type { K1Form, OwnershipInterest } from '@/types/k1';
 
 interface Props {
   interestId: number;

@@ -1,5 +1,7 @@
 import './bootstrap';
+
 import { createRoot } from 'react-dom/client';
+
 import CompanyDetail from '@/components/k1/CompanyDetail';
 
 const mount = document.getElementById('company-detail');
