@@ -35,11 +35,7 @@ export default function K1FormDetail({ interestId, formId }: Props) {
   const [uploadProgress, setUploadProgress] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [interestId, formId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [formDataResult, interestResult] = await Promise.all([
         fetchWrapper.get(`/api/forms/${formId}`),
@@ -53,7 +49,11 @@ export default function K1FormDetail({ interestId, formId }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [formId, interestId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Auto-save on blur - only saves changed fields
   const saveField = useCallback(async (field: keyof K1Form) => {

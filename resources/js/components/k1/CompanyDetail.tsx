@@ -1,5 +1,5 @@
 import { ArrowRight,Building2, ChevronLeft, ChevronRight, FileText, Plus, Trash2, Users } from 'lucide-react';
-import { useEffect, useMemo,useState } from 'react';
+import { useCallback, useEffect, useMemo,useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,11 +30,7 @@ export default function CompanyDetail({ companyId }: Props) {
   const [allCompanies, setAllCompanies] = useState<K1Company[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, [companyId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [comp, owned, ownedBy, all] = await Promise.all([
@@ -52,7 +48,11 @@ export default function CompanyDetail({ companyId }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const reloadInterests = async () => {
     try {

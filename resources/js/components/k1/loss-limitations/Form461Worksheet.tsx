@@ -1,6 +1,6 @@
 // React namespace not required; using named imports when needed
 import { Loader2, Save } from 'lucide-react';
-import { useEffect,useState } from 'react';
+import { useCallback, useEffect,useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,11 +44,7 @@ export default function Form461Worksheet({ interestId, year, onCalculationUpdate
     formData.line_15 !== (data.line_15 || '')
   ) : false;
 
-  useEffect(() => {
-    loadData();
-  }, [interestId, year]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetchWrapper.get(`/api/ownership-interests/${interestId}/f461/${year}`);
@@ -69,7 +65,11 @@ export default function Form461Worksheet({ interestId, year, onCalculationUpdate
     } finally {
       setLoading(false);
     }
-  };
+  }, [interestId, year]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

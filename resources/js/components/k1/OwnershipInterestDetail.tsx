@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import {useEffect, useRef, useState } from 'react';
+import {useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,11 +31,7 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-  useEffect(() => {
-    loadInterest();
-  }, [interestId]);
-
-  const loadInterest = async () => {
+  const loadInterest = useCallback(async () => {
     console.log('[OwnershipInterestDetail] Loading interest data...');
     try {
       const data = await fetchWrapper.get(`/api/ownership-interests/${interestId}`);
@@ -57,7 +53,11 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
       console.log('[OwnershipInterestDetail] Setting loading to false');
       setLoading(false);
     }
-  };
+  }, [interestId]);
+
+  useEffect(() => {
+    loadInterest();
+  }, [loadInterest]);
 
   if (loading) {
     console.log('[OwnershipInterestDetail] Rendering loading state');

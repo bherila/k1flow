@@ -1,8 +1,0 @@
-node_modules/
-public/build/
-build/
-vendor/
-storage/
-/.pnp.cjs
-*.min.js
-*.map
