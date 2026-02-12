@@ -73,7 +73,7 @@ class CreateUser extends Command
             $user = User::create([
                 'name' => $name,
                 'email' => $email,
-                'password' => $password,
+                'password' => \Illuminate\Support\Facades\Hash::make($password),
                 'is_admin' => (bool) $isAdmin,
                 'is_disabled' => (bool) $isDisabled,
             ]);
