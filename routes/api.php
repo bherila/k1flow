@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\K1\K1CompanyController;
 use App\Http\Controllers\K1\K1FormController;
 use App\Http\Controllers\K1\K1IncomeSourceController;
@@ -14,6 +15,16 @@ use Illuminate\Support\Facades\Route;
 | K-1 Flow API Routes
 |--------------------------------------------------------------------------
 */
+
+// Admin User Management API Routes (protected by admin-only gate)
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::get('/users', [AdminUserController::class, 'list']);
+    Route::get('/users/{user}', [AdminUserController::class, 'show']);
+    Route::post('/users', [AdminUserController::class, 'store']);
+    Route::put('/users/{user}', [AdminUserController::class, 'update']);
+    Route::delete('/users/{user}', [AdminUserController::class, 'destroy']);
+    Route::get('/users/{user}/audit-log', [AdminUserController::class, 'auditLog']);
+});
 
 // Companies
 Route::apiResource('companies', K1CompanyController::class);

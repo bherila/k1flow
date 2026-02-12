@@ -1,3 +1,6 @@
+@php
+use Illuminate\Support\Facades\Gate;
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
   <head>
@@ -26,7 +29,8 @@
     <header class="site-header border-b border-gray-200 dark:border-[#3E3E3A] h-14">
       <div id="navbar" 
         data-authenticated="{{ auth()->check() ? 'true' : 'false' }}" 
-        data-is-admin="{{ auth()->check() && (auth()->id() === 1 || auth()->user()->user_role === 'Admin') ? 'true' : 'false' }}" 
+        data-is-admin="{{ auth()->check() && Gate::allows('admin-only') ? 'true' : 'false' }}"
+        data-user="{{ auth()->check() ? json_encode(['id' => auth()->id(), 'name' => auth()->user()->name, 'email' => auth()->user()->email]) : '{}' }}"
       />
     </header>
 
