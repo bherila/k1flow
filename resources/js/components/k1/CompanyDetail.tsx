@@ -142,12 +142,23 @@ export default function CompanyDetail({ companyId }: Props) {
   };
 
   // Helper to get ending basis for a specific year and interest
-  const getEndingBasis = (interestId: number, year: number): number | null => {
-    const walk = basisWalkData[interestId];
-    if (!walk) return null;
+  const endingBasisLookup = useMemo(() => {
+    const lookup: Record<number, Record<number, number | null>> = {};
     
-    const yearData = walk.basis_walk.find(w => w.tax_year === year);
-    return yearData?.ending_basis ?? null;
+    Object.entries(basisWalkData).forEach(([interestIdStr, walk]) => {
+      const interestId = parseInt(interestIdStr);
+      lookup[interestId] = {};
+      
+      walk.basis_walk.forEach(yearData => {
+        lookup[interestId][yearData.tax_year] = yearData.ending_basis ?? null;
+      });
+    });
+    
+    return lookup;
+  }, [basisWalkData]);
+
+  const getEndingBasis = (interestId: number, year: number): number | null => {
+    return endingBasisLookup[interestId]?.[year] ?? null;
   };
 
   // Helper to check if year is inception year for an interest
@@ -251,9 +262,9 @@ export default function CompanyDetail({ companyId }: Props) {
         </TabsList>
 
         <TabsContent value="year" className="space-y-6">
-          {groupedByYear.map(({ year, interests }) => {
+          {(() => {
             const currentYear = new Date().getFullYear();
-            return (
+            return groupedByYear.map(({ year, interests }) => (
               <Card key={year}>
                 <CardHeader className="py-4">
                   <CardTitle className="text-lg font-medium">Tax Year {year}</CardTitle>
@@ -339,8 +350,8 @@ export default function CompanyDetail({ companyId }: Props) {
                   </Table>
                 </CardContent>
               </Card>
-            );
-          })}
+            ));
+          })()}
           {groupedByYear.length === 0 && (
              <div className="text-center py-8 text-muted-foreground">
                No ownership interests found. Add one to see years.
