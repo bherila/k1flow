@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Route;
 
 // Authentication Routes
 Route::get('/sign-in', [AuthController::class, 'showSignIn'])->name('sign-in')->middleware('guest');
+// Also expose a conventional `/login` route name so `auth` middleware redirects work
+Route::get('/login', function () {
+    return redirect()->route('sign-in');
+})->name('login');
 Route::post('/sign-in', [AuthController::class, 'signIn'])->middleware('guest');
 Route::get('/sign-up', [AuthController::class, 'showSignUp'])->name('sign-up')->middleware('guest');
 Route::post('/sign-up', [AuthController::class, 'signUp'])->middleware('guest');

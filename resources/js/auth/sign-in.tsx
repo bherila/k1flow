@@ -11,6 +11,7 @@ function SignIn() {
   const [password, setPassword] = useState('');
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,12 +40,51 @@ function SignIn() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    try {
+      const resp = await fetch('/sign-in', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email, password, remember: false }),
+      });
+
+      if (resp.ok) {
+        const redirectUrl = resp.redirected ? resp.url : '/companies';
+        window.location.href = redirectUrl;
+        return;
+      }
+
+      if (resp.status === 422) {
+        const data = await resp.json();
+        const msg = data.errors?.email?.[0] || data.message || 'Invalid credentials';
+        setError(msg);
+        return;
+      }
+
+      const text = await resp.text();
+      setError(text || 'Sign-in failed');
+    } catch (err) {
+      console.error(err);
+      setError('Sign-in failed — network error');
+    }
+  };
+
   return (
     <div className='max-w-md mx-auto mt-12'>
       <div className='bg-white dark:bg-[#1C1C1A] p-8 rounded-lg shadow-lg border border-gray-200 dark:border-[#3E3E3A]'>
         <h1 className='text-2xl font-bold mb-6 text-center'>Sign In</h1>
         
-        <form method='POST' action='/sign-in'>
+        <form onSubmit={handleSubmit}>
           <input type='hidden' name='_token' value={document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''} />
           
           <div className='space-y-4'>
@@ -77,6 +117,10 @@ function SignIn() {
             <Button type='submit' className='w-full'>
               Sign In
             </Button>
+
+            {error && (
+              <p className='text-center text-sm text-red-600 mt-2'>{error}</p>
+            )}
 
             <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
               <DialogTrigger asChild>
