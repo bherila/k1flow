@@ -4,6 +4,8 @@ A web application for managing Schedule K-1 forms and tracking flow-through tax 
 
 ## Features
 
+- **User Authentication & Management**: Complete user sign-up, sign-in, email verification, and password reset flows
+- **Admin Panel**: Comprehensive user management for administrators with audit logging
 - **Company Management**: Track multiple K-1 issuing entities with EIN, address, and entity type
 - **K-1 Form Tracking**: Store and manage Schedule K-1 forms by tax year with all IRS fields
 - **Outside Basis Tracking**: Calculate and track your tax basis in partnership interests
@@ -11,6 +13,27 @@ A web application for managing Schedule K-1 forms and tracking flow-through tax 
 - **Loss Carryforwards**: Manage suspended losses by type and character
 - **Ownership Hierarchy**: Model tiered ownership structures for flow-through calculations
 - **PDF Storage**: Upload and store K-1 form PDFs
+
+## Authentication & Security
+
+- Email verification required for new accounts
+- Password reset via email
+- Admin-only access control using Laravel Gates
+- Account lockout capability
+- Comprehensive audit logging of user actions
+- IP tracking for security (Cloudflare-aware)
+- Soft delete for users
+
+## User Roles
+
+- **Standard Users**: Can manage their own K-1 forms and ownership interests
+- **Administrators**: 
+  - User ID 1 is always an admin
+  - Can manage all users
+  - Can lock/unlock accounts
+  - Can reset passwords
+  - Can view audit logs
+  - Can verify email addresses
 
 ## Tech Stack
 
@@ -93,6 +116,8 @@ For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md).
 
 ### Core Tables
 
+- `users` - User accounts with authentication and authorization
+- `user_audit_logs` - Comprehensive audit trail of user actions
 - `k1_companies` - Partnership/S-Corp entities that issue K-1s
 - `k1_forms` - Schedule K-1 forms with all Part I, II, and III fields
 - `k1_income_sources` - Income categorization (passive, non-passive, capital, 461(l))
@@ -103,6 +128,33 @@ For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md).
 - `k1_ownership` - Ownership relationships for tiered structures
 
 ## API Endpoints
+
+### Authentication
+- `GET /sign-in` - Sign in page
+- `POST /sign-in` - Process sign in
+- `GET /sign-up` - Sign up page
+- `POST /sign-up` - Process sign up
+- `POST /sign-out` - Sign out
+- `GET /email/verify` - Email verification notice
+- `GET /email/verify/{id}/{hash}` - Process email verification
+- `POST /email/verification-notification` - Resend verification email
+- `GET /reset-password/{token}` - Password reset form
+- `POST /reset-password` - Process password reset
+- `POST /forgot-password` - Request password reset
+
+### User Settings
+- `GET /user/settings` - User settings page
+- `POST /user/settings/profile` - Update profile
+- `POST /user/settings/password` - Change password
+- `POST /user/settings/email` - Request email change
+
+### Admin (Requires admin-only gate)
+- `GET /admin/users` - Admin user management page
+- `GET /api/admin/users` - List all users
+- `POST /api/admin/users` - Create user
+- `PUT /api/admin/users/{user}` - Update user
+- `DELETE /api/admin/users/{user}` - Delete user
+- `GET /api/admin/users/{user}/audit-log` - View user audit log
 
 ### Companies
 - `GET /api/companies` - List all companies
