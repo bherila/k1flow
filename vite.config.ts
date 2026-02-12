@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/app.jsx',
                 'resources/js/company.tsx',
                 'resources/js/k1-form.tsx',
+                'resources/js/k1-form-streamlined.tsx',
                 'resources/js/ownership-interest.tsx',
                 'resources/js/ownership-basis-detail.tsx',
                 'resources/js/loss-limitation-detail.tsx',

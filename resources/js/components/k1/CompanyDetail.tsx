@@ -150,7 +150,9 @@ export default function CompanyDetail({ companyId }: Props) {
       lookup[interestId] = {};
       
       walk.basis_walk.forEach(yearData => {
-        lookup[interestId][yearData.tax_year] = yearData.ending_basis ?? null;
+        if (lookup[interestId]) {
+          lookup[interestId][yearData.tax_year] = yearData.ending_basis ?? null;
+        }
       });
     });
     
@@ -298,10 +300,11 @@ export default function CompanyDetail({ companyId }: Props) {
                                 <div className="flex items-center gap-2">
                                   {interest.owned_company?.name || 'Unknown Entity'}
                                   {isInception && (
-                                    <Star 
-                                      className="h-4 w-4 text-yellow-500 fill-yellow-500" 
-                                      title="Inception year"
-                                    />
+                                    <span title="Inception year">
+                                      <Star 
+                                        className="h-4 w-4 text-yellow-500 fill-yellow-500" 
+                                      />
+                                    </span>
                                   )}
                                 </div>
                               </TableCell>
@@ -333,6 +336,13 @@ export default function CompanyDetail({ companyId }: Props) {
                                       </>
                                     )}
                                   </Button>
+                                  <a 
+                                    href={`/ownership/${interest.id}/k1-streamlined`}
+                                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                                  >
+                                    <ArrowRight className="h-4 w-4" />
+                                    Multi-Year
+                                  </a>
                                   <a 
                                     href={`/ownership/${interest.id}`}
                                     className="text-sm text-primary hover:underline flex items-center gap-1"
@@ -416,10 +426,11 @@ export default function CompanyDetail({ companyId }: Props) {
                                <div className="flex items-center gap-2">
                                  {year}
                                  {isInception && (
-                                   <Star 
-                                     className="h-4 w-4 text-yellow-500 fill-yellow-500" 
-                                     title="Inception year"
-                                   />
+                                   <span title="Inception year">
+                                     <Star 
+                                       className="h-4 w-4 text-yellow-500 fill-yellow-500" 
+                                     />
+                                   </span>
                                  )}
                                </div>
                              </TableCell>
@@ -451,6 +462,13 @@ export default function CompanyDetail({ companyId }: Props) {
                                      </>
                                    )}
                                  </Button>
+                                 <a 
+                                   href={`/ownership/${interest.id}/k1-streamlined`}
+                                   className="text-sm text-primary hover:underline flex items-center gap-1"
+                                 >
+                                   <ArrowRight className="h-4 w-4" />
+                                   Multi-Year
+                                 </a>
                                  <a 
                                    href={`/ownership/${interest.id}`}
                                    className="text-sm text-primary hover:underline flex items-center gap-1"
