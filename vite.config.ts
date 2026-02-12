@@ -17,6 +17,14 @@ export default defineConfig({
                 'resources/js/loss-limitation-detail.tsx',
                 'resources/js/home.tsx',
                 'resources/js/navbar.tsx',
+                // Auth pages
+                'resources/js/auth/sign-in.tsx',
+                'resources/js/auth/sign-up.tsx',
+                'resources/js/auth/reset-password.tsx',
+                'resources/js/auth/verify-email.tsx',
+                'resources/js/auth/settings.tsx',
+                // Admin pages
+                'resources/js/admin/users.tsx',
             ],
       refresh: true,
     }),
