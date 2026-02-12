@@ -12,11 +12,30 @@ use Illuminate\Support\Facades\Gate;
 class OwnershipInterestController extends Controller
 {
     /**
-     * Display all ownership interests.
+     * Display ownership interests visible to the authenticated user.
+     *
+     * Only returns interests that connect two companies the user owns or
+     * has been granted access to. (Admin privileges do NOT expand visibility.)
      */
     public function index(): JsonResponse
     {
+        $user = auth()->user();
+
+        // Get IDs of companies the user owns or has shared access to
+        $accessibleCompanyIds = K1Company::where(function ($q) use ($user) {
+            $q->where('owner_user_id', $user->id)
+              ->orWhereHas('users', function ($u) use ($user) {
+                  $u->where('user_id', $user->id);
+              });
+        })->pluck('id');
+
+        // Only include interests where both the owner and owned company are in the
+        // user's accessible set. This prevents exposing relationships to external companies.
         $interests = OwnershipInterest::with(['ownerCompany', 'ownedCompany'])
+            ->whereNotNull('owner_company_id')
+            ->whereNotNull('owned_company_id')
+            ->whereIn('owner_company_id', $accessibleCompanyIds)
+            ->whereIn('owned_company_id', $accessibleCompanyIds)
             ->orderBy('created_at', 'desc')
             ->get();
 
