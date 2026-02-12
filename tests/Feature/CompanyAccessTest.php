@@ -136,7 +136,7 @@ class CompanyAccessTest extends TestCase
 
         $response->assertStatus(204);
 
-        $this->assertDatabaseMissing('k1_companies', [
+        $this->assertSoftDeleted('k1_companies', [
             'id' => $this->company->id,
         ]);
     }
