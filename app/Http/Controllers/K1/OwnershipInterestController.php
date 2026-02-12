@@ -7,6 +7,7 @@ use App\Models\K1\K1Company;
 use App\Models\K1\OwnershipInterest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class OwnershipInterestController extends Controller
 {
@@ -27,6 +28,8 @@ class OwnershipInterestController extends Controller
      */
     public function forCompany(K1Company $company): JsonResponse
     {
+        Gate::authorize('access-company', $company);
+
         $interests = OwnershipInterest::with(['ownedCompany', 'k1Forms'])
             ->where('owner_company_id', $company->id)
             ->orderBy('created_at', 'desc')
@@ -40,6 +43,8 @@ class OwnershipInterestController extends Controller
      */
     public function ownedByCompany(K1Company $company): JsonResponse
     {
+        Gate::authorize('access-company', $company);
+
         $interests = OwnershipInterest::with(['ownerCompany'])
             ->where('owned_company_id', $company->id)
             ->orderBy('created_at', 'desc')

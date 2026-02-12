@@ -7,6 +7,7 @@ use App\Models\K1\K1Form;
 use App\Models\K1\OwnershipInterest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -17,6 +18,9 @@ class K1FormController extends Controller
      */
     public function index(OwnershipInterest $interest): JsonResponse
     {
+        $company = $interest->ownedCompany;
+        Gate::authorize('access-company', $company);
+
         $forms = $interest->k1Forms()
             ->orderBy('tax_year', 'desc')
             ->get();
@@ -29,6 +33,9 @@ class K1FormController extends Controller
      */
     public function store(Request $request, OwnershipInterest $interest): JsonResponse
     {
+        $company = $interest->ownedCompany;
+        Gate::authorize('access-company', $company);
+
         $validated = $request->validate([
             'tax_year' => [
                 'required',
@@ -134,6 +141,10 @@ class K1FormController extends Controller
      */
     public function show(K1Form $form): JsonResponse
     {
+        $form->load(['ownershipInterest.ownedCompany']);
+        $company = $form->ownershipInterest->ownedCompany;
+        Gate::authorize('access-company', $company);
+
         $form->load(['incomeSources', 'ownershipInterest.ownedCompany']);
 
         return response()->json($form);
@@ -144,6 +155,10 @@ class K1FormController extends Controller
      */
     public function update(Request $request, K1Form $form): JsonResponse
     {
+        $form->load(['ownershipInterest.ownedCompany']);
+        $company = $form->ownershipInterest->ownedCompany;
+        Gate::authorize('access-company', $company);
+
         $validated = $request->validate([
             'tax_year' => [
                 'sometimes',
@@ -235,6 +250,10 @@ class K1FormController extends Controller
      */
     public function destroy(K1Form $form): JsonResponse
     {
+        $form->load(['ownershipInterest.ownedCompany']);
+        $company = $form->ownershipInterest->ownedCompany;
+        Gate::authorize('access-company', $company);
+
         $form->delete();
 
         return response()->json(null, 204);
@@ -245,6 +264,10 @@ class K1FormController extends Controller
      */
     public function uploadForm(Request $request, K1Form $form): JsonResponse
     {
+        $form->load(['ownershipInterest.ownedCompany']);
+        $company = $form->ownershipInterest->ownedCompany;
+        Gate::authorize('access-company', $company);
+
         $request->validate([
             'file' => 'required|file|mimes:pdf|max:10240',
         ]);
@@ -274,6 +297,10 @@ class K1FormController extends Controller
      */
     public function extractFromPdf(Request $request, K1Form $form): JsonResponse
     {
+        $form->load(['ownershipInterest.ownedCompany']);
+        $company = $form->ownershipInterest->ownedCompany;
+        Gate::authorize('access-company', $company);
+
         $request->validate([
             'pdf' => 'required|file|mimes:pdf|max:10240',
         ]);
