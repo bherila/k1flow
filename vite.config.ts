@@ -27,6 +27,7 @@ export default defineConfig({
                 'resources/js/auth/settings.tsx',
                 // Admin pages
                 'resources/js/admin/users.tsx',
+                'resources/js/admin/edit-user.tsx',
             ],
       refresh: true,
     }),

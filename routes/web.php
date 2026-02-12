@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
 // Admin Routes
 Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users');
+    Route::get('/user/{user}', [AdminUserController::class, 'edit'])->name('admin.user.edit');
 });
 
 // Home page with welcome message (redirects to companies if logged in)

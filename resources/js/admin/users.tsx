@@ -92,7 +92,14 @@ function AdminUsers() {
                       </span>
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm'>
-                      <Button variant='outline' size='sm' className='mr-2'>Edit</Button>
+                      <Button 
+                        variant='outline' 
+                        size='sm' 
+                        className='mr-2'
+                        onClick={() => window.location.href = `/admin/user/${user.id}`}
+                      >
+                        Edit
+                      </Button>
                       <Button variant='outline' size='sm'>Audit Log</Button>
                     </td>
                   </tr>

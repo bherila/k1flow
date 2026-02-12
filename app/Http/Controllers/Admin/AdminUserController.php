@@ -181,25 +181,132 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Delete a user (soft delete).
+     * Show the user edit page.
+     */
+    public function edit(User $user)
+    {
+        if (!Gate::allows('admin-only')) {
+            abort(403, 'Unauthorized');
+        }
+        return view('admin.edit-user', ['userId' => $user->id]);
+    }
+
+    /**
+     * Get user's companies with permissions.
+     */
+    public function userCompanies(User $user)
+    {
+        if (!Gate::allows('admin-only')) {
+            abort(403, 'Unauthorized');
+        }
+
+        // Get companies owned by the user
+        $ownedCompanies = \App\Models\K1\K1Company::where('owner_user_id', $user->id)
+            ->withTrashed()
+            ->get()
+            ->map(function ($company) {
+                return [
+                    'id' => $company->id,
+                    'name' => $company->name,
+                    'ein' => $company->ein,
+                    'permission' => 'owner',
+                    'deleted_at' => $company->deleted_at,
+                ];
+            });
+
+        // Get companies shared with the user
+        $sharedCompanies = $user->companies()
+            ->withPivot('created_at')
+            ->withTrashed()
+            ->get()
+            ->map(function ($company) {
+                return [
+                    'id' => $company->id,
+                    'name' => $company->name,
+                    'ein' => $company->ein,
+                    'permission' => 'shared',
+                    'deleted_at' => $company->deleted_at,
+                ];
+            });
+
+        $companies = $ownedCompanies->merge($sharedCompanies)->sortBy('name')->values();
+
+        return response()->json($companies);
+    }
+
+    /**
+     * Delete a user (soft delete) and cascade delete all related data.
      */
     public function destroy(User $user)
     {
         if (!Gate::allows('admin-only')) {
             abort(403, 'Unauthorized');
         }
-        
+
+        // Get all companies owned by this user
+        $companies = \App\Models\K1\K1Company::where('owner_user_id', $user->id)->get();
+
+        foreach ($companies as $company) {
+            // Soft delete ownership interests where this company is the owner
+            $ownershipInterests = \App\Models\K1\OwnershipInterest::where('owner_company_id', $company->id)->get();
+            $this->deleteOwnershipInterestData($ownershipInterests);
+
+            // Also handle ownership interests where this company is owned
+            $ownedByInterests = \App\Models\K1\OwnershipInterest::where('owned_company_id', $company->id)->get();
+            $this->deleteOwnershipInterestData($ownedByInterests);
+
+            // Soft delete the company
+            $company->delete();
+        }
+
+        // Soft delete the user
         $user->delete();
 
         UserAuditLog::log(
             userId: $user->id,
             eventName: 'update',
             isSuccessful: true,
-            message: 'Admin deleted user',
+            message: 'Admin deleted user and all related data',
             actingUserId: auth()->id()
         );
 
-        return response()->json(['message' => 'User deleted successfully']);
+        return response()->json(['message' => 'User and all related data deleted successfully']);
+    }
+
+    /**
+     * Delete all data associated with ownership interests.
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $interests
+     */
+    private function deleteOwnershipInterestData($interests): void
+    {
+        foreach ($interests as $interest) {
+            // Delete K1 forms and their income sources
+            $forms = \App\Models\K1\K1Form::where('ownership_interest_id', $interest->id)->get();
+            foreach ($forms as $form) {
+                \App\Models\K1\K1IncomeSource::where('k1_form_id', $form->id)->delete();
+                $form->delete();
+            }
+
+            // Delete outside basis and adjustments
+            $outsideBases = \App\Models\K1\OutsideBasis::where('ownership_interest_id', $interest->id)->get();
+            foreach ($outsideBases as $basis) {
+                \App\Models\K1\ObAdjustment::where('outside_basis_id', $basis->id)->delete();
+                $basis->delete();
+            }
+
+            // Delete loss limitations
+            \App\Models\K1\LossLimitation::where('ownership_interest_id', $interest->id)->delete();
+
+            // Delete loss carryforwards
+            \App\Models\K1\LossCarryforward::where('ownership_interest_id', $interest->id)->delete();
+
+            // Delete F461 worksheets
+            \App\Models\K1\F461Worksheet::where('ownership_interest_id', $interest->id)->delete();
+
+            // Delete the ownership interest
+            $interest->delete();
+        }
     }
 
     /**
