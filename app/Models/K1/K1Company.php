@@ -5,6 +5,8 @@ namespace App\Models\K1;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class K1Company extends Model
 {
@@ -19,7 +21,25 @@ class K1Company extends Model
         'state',
         'zip',
         'notes',
+        'owner_user_id',
     ];
+
+    /**
+     * Get the owner of this company.
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'owner_user_id');
+    }
+
+    /**
+     * Get all users who have access to this company (shared access).
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\User::class, 'company_user')
+            ->withTimestamps();
+    }
 
     /**
      * Get ownership interests where this company is the owner (investor).

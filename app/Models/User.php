@@ -71,4 +71,21 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(UserAuditLog::class, 'acting_user_id');
     }
+
+    /**
+     * Get companies owned by this user.
+     */
+    public function ownedCompanies()
+    {
+        return $this->hasMany(\App\Models\K1\K1Company::class, 'owner_user_id');
+    }
+
+    /**
+     * Get companies this user has shared access to.
+     */
+    public function companies()
+    {
+        return $this->belongsToMany(\App\Models\K1\K1Company::class, 'company_user')
+            ->withTimestamps();
+    }
 }

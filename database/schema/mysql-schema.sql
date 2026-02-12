@@ -24,6 +24,22 @@ CREATE TABLE `cache_locks` (
   PRIMARY KEY (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `company_user`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `company_user` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `company_id` bigint(20) unsigned NOT NULL,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `company_user_company_id_user_id_unique` (`company_id`,`user_id`),
+  KEY `company_user_user_id_foreign` (`user_id`),
+  CONSTRAINT `company_user_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `k1_companies` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `company_user_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `jobs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -44,6 +60,7 @@ DROP TABLE IF EXISTS `k1_companies`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `k1_companies` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `owner_user_id` bigint(20) unsigned DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `ein` varchar(255) DEFAULT NULL,
   `entity_type` varchar(255) DEFAULT NULL,
@@ -54,7 +71,9 @@ CREATE TABLE `k1_companies` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `k1_companies_owner_user_id_foreign` (`owner_user_id`),
+  CONSTRAINT `k1_companies_owner_user_id_foreign` FOREIGN KEY (`owner_user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `k1_f461_worksheets`;
