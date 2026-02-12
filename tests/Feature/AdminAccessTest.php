@@ -12,6 +12,14 @@ class AdminAccessTest extends TestCase
 
     public function test_non_admin_cannot_access_admin_pages()
     {
+        // Create a dummy user first to ensure our test user doesn't get ID 1
+        User::create([
+            'name' => 'Dummy User',
+            'email' => 'dummy@example.com',
+            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+        ]);
+        
         $user = User::create([
             'name' => 'Regular User',
             'email' => 'user@example.com',
@@ -62,6 +70,14 @@ class AdminAccessTest extends TestCase
 
     public function test_non_admin_cannot_access_admin_api()
     {
+        // Create a dummy user first to ensure our test user doesn't get ID 1
+        User::create([
+            'name' => 'Dummy User',
+            'email' => 'dummy@example.com',
+            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+        ]);
+        
         $user = User::create([
             'name' => 'Regular User',
             'email' => 'user@example.com',

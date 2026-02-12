@@ -13,22 +13,14 @@ use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-        $this->middleware(function ($request, $next) {
-            if (!Gate::allows('admin-only')) {
-                abort(403, 'Unauthorized');
-            }
-            return $next($request);
-        });
-    }
-
     /**
      * Show the admin users page.
      */
     public function index()
     {
+        if (!Gate::allows('admin-only')) {
+            abort(403, 'Unauthorized');
+        }
         return view('admin.users');
     }
 
@@ -37,6 +29,10 @@ class AdminUserController extends Controller
      */
     public function list(Request $request)
     {
+        if (!Gate::allows('admin-only')) {
+            abort(403, 'Unauthorized');
+        }
+        
         $perPage = $request->input('per_page', 50);
         
         $users = User::withTrashed()
@@ -51,6 +47,9 @@ class AdminUserController extends Controller
      */
     public function show(User $user)
     {
+        if (!Gate::allows('admin-only')) {
+            abort(403, 'Unauthorized');
+        }
         return response()->json($user);
     }
 
@@ -59,6 +58,9 @@ class AdminUserController extends Controller
      */
     public function store(Request $request)
     {
+        if (!Gate::allows('admin-only')) {
+            abort(403, 'Unauthorized');
+        }
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -95,6 +97,9 @@ class AdminUserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        if (!Gate::allows('admin-only')) {
+            abort(403, 'Unauthorized');
+        }
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'email' => ['sometimes', 'required', 'email', Rule::unique('users')->ignore($user->id)],
@@ -180,6 +185,10 @@ class AdminUserController extends Controller
      */
     public function destroy(User $user)
     {
+        if (!Gate::allows('admin-only')) {
+            abort(403, 'Unauthorized');
+        }
+        
         $user->delete();
 
         UserAuditLog::log(
@@ -198,6 +207,10 @@ class AdminUserController extends Controller
      */
     public function auditLog(Request $request, User $user)
     {
+        if (!Gate::allows('admin-only')) {
+            abort(403, 'Unauthorized');
+        }
+        
         $perPage = $request->input('per_page', 15);
 
         $logs = UserAuditLog::where('user_id', $user->id)
