@@ -249,64 +249,11 @@ class AdminUserController extends Controller
         foreach ($companies as $company) {
             // Soft delete ownership interests where this company is the owner
             $ownershipInterests = \App\Models\K1\OwnershipInterest::where('owner_company_id', $company->id)->get();
-
-            foreach ($ownershipInterests as $interest) {
-                // Soft delete K1 forms and their income sources
-                $forms = \App\Models\K1\K1Form::where('ownership_interest_id', $interest->id)->get();
-                foreach ($forms as $form) {
-                    \App\Models\K1\K1IncomeSource::where('k1_form_id', $form->id)->delete();
-                    $form->delete();
-                }
-                
-                // Soft delete outside basis and adjustments
-                $outsideBases = \App\Models\K1\OutsideBasis::where('ownership_interest_id', $interest->id)->get();
-                foreach ($outsideBases as $basis) {
-                    \App\Models\K1\ObAdjustment::where('outside_basis_id', $basis->id)->delete();
-                    $basis->delete();
-                }
-
-                // Soft delete loss limitations
-                \App\Models\K1\LossLimitation::where('ownership_interest_id', $interest->id)->delete();
-
-                // Soft delete loss carryforwards
-                \App\Models\K1\LossCarryforward::where('ownership_interest_id', $interest->id)->delete();
-
-                // Soft delete F461 worksheets
-                \App\Models\K1\F461Worksheet::where('ownership_interest_id', $interest->id)->delete();
-
-                // Soft delete the ownership interest itself
-                $interest->delete();
-            }
+            $this->deleteOwnershipInterestData($ownershipInterests);
 
             // Also handle ownership interests where this company is owned
             $ownedByInterests = \App\Models\K1\OwnershipInterest::where('owned_company_id', $company->id)->get();
-            foreach ($ownedByInterests as $interest) {
-                // Delete K1 forms
-                $forms = \App\Models\K1\K1Form::where('ownership_interest_id', $interest->id)->get();
-                foreach ($forms as $form) {
-                    \App\Models\K1\K1IncomeSource::where('k1_form_id', $form->id)->delete();
-                    $form->delete();
-                }
-
-                // Delete outside basis and adjustments
-                $outsideBases = \App\Models\K1\OutsideBasis::where('ownership_interest_id', $interest->id)->get();
-                foreach ($outsideBases as $basis) {
-                    \App\Models\K1\ObAdjustment::where('outside_basis_id', $basis->id)->delete();
-                    $basis->delete();
-                }
-
-                // Delete loss limitations
-                \App\Models\K1\LossLimitation::where('ownership_interest_id', $interest->id)->delete();
-
-                // Delete loss carryforwards
-                \App\Models\K1\LossCarryforward::where('ownership_interest_id', $interest->id)->delete();
-
-                // Delete F461 worksheets
-                \App\Models\K1\F461Worksheet::where('ownership_interest_id', $interest->id)->delete();
-
-                // Delete the ownership interest
-                $interest->delete();
-            }
+            $this->deleteOwnershipInterestData($ownedByInterests);
 
             // Soft delete the company
             $company->delete();
@@ -324,6 +271,42 @@ class AdminUserController extends Controller
         );
 
         return response()->json(['message' => 'User and all related data deleted successfully']);
+    }
+
+    /**
+     * Delete all data associated with ownership interests.
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $interests
+     */
+    private function deleteOwnershipInterestData($interests): void
+    {
+        foreach ($interests as $interest) {
+            // Delete K1 forms and their income sources
+            $forms = \App\Models\K1\K1Form::where('ownership_interest_id', $interest->id)->get();
+            foreach ($forms as $form) {
+                \App\Models\K1\K1IncomeSource::where('k1_form_id', $form->id)->delete();
+                $form->delete();
+            }
+
+            // Delete outside basis and adjustments
+            $outsideBases = \App\Models\K1\OutsideBasis::where('ownership_interest_id', $interest->id)->get();
+            foreach ($outsideBases as $basis) {
+                \App\Models\K1\ObAdjustment::where('outside_basis_id', $basis->id)->delete();
+                $basis->delete();
+            }
+
+            // Delete loss limitations
+            \App\Models\K1\LossLimitation::where('ownership_interest_id', $interest->id)->delete();
+
+            // Delete loss carryforwards
+            \App\Models\K1\LossCarryforward::where('ownership_interest_id', $interest->id)->delete();
+
+            // Delete F461 worksheets
+            \App\Models\K1\F461Worksheet::where('ownership_interest_id', $interest->id)->delete();
+
+            // Delete the ownership interest
+            $interest->delete();
+        }
     }
 
     /**
