@@ -7,6 +7,7 @@ A web application for managing Schedule K-1 forms and tracking flow-through tax 
 - **User Authentication & Management**: Complete user sign-up, sign-in, email verification, and password reset flows
 - **Admin Panel**: Comprehensive user management for administrators with audit logging
 - **Company Management**: Track multiple K-1 issuing entities with EIN, address, and entity type
+- **Company Ownership & Access Control**: Fine-grained access control - companies are owned by users and can be shared with other users
 - **K-1 Form Tracking**: Store and manage Schedule K-1 forms by tax year with all IRS fields
 - **Outside Basis Tracking**: Calculate and track your tax basis in partnership interests
 - **Loss Limitations**: Track suspended losses under Section 465 (At-Risk), Section 469 (Passive), and Section 461(l) (Excess Business Loss)
@@ -19,14 +20,20 @@ A web application for managing Schedule K-1 forms and tracking flow-through tax 
 - Email verification required for new accounts
 - Password reset via email
 - Admin-only access control using Laravel Gates
+- **Company-level access control**: Each company has an owner and can grant shared access to other users
 - Account lockout capability
 - Comprehensive audit logging of user actions
 - IP tracking for security (Cloudflare-aware)
 - Soft delete for users
+- Caching for optimized authorization checks
 
-## User Roles
+## User Roles & Permissions
 
-- **Standard Users**: Can manage their own K-1 forms and ownership interests
+- **Standard Users**: 
+  - Can create and own companies
+  - Can grant/revoke access to their companies for other users
+  - Can access companies owned by them or shared with them
+  - Can manage K-1 forms, ownership interests, and basis tracking for companies they have access to
 - **Administrators**: 
   - User ID 1 is always an admin
   - Can manage all users
@@ -118,7 +125,8 @@ For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md).
 
 - `users` - User accounts with authentication and authorization
 - `user_audit_logs` - Comprehensive audit trail of user actions
-- `k1_companies` - Partnership/S-Corp entities that issue K-1s
+- `k1_companies` - Partnership/S-Corp entities that issue K-1s (with owner_user_id for ownership)
+- `company_user` - Pivot table for shared access to companies
 - `k1_forms` - Schedule K-1 forms with all Part I, II, and III fields
 - `k1_income_sources` - Income categorization (passive, non-passive, capital, 461(l))
 - `k1_outside_basis` - Outside basis tracking per K-1
@@ -156,35 +164,45 @@ For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md).
 - `DELETE /api/admin/users/{user}` - Delete user
 - `GET /api/admin/users/{user}/audit-log` - View user audit log
 
-### Companies
-- `GET /api/companies` - List all companies
-- `POST /api/companies` - Create company
-- `GET /api/companies/{id}` - Get company details
-- `PUT /api/companies/{id}` - Update company
-- `DELETE /api/companies/{id}` - Delete company
+### Companies (Requires authentication + access-company gate for specific company operations)
+- `GET /api/companies` - List companies the user owns or has access to
+- `POST /api/companies` - Create company (user becomes owner)
+- `GET /api/companies/{company}` - Get company details
+- `PUT /api/companies/{company}` - Update company
+- `DELETE /api/companies/{company}` - Delete company
 
-### K-1 Forms
-- `GET /api/companies/{id}/forms` - List K-1 forms for company
-- `POST /api/companies/{id}/forms` - Create K-1 form
-- `GET /api/companies/{id}/forms/{formId}` - Get K-1 form details
-- `PUT /api/companies/{id}/forms/{formId}` - Update K-1 form
-- `DELETE /api/companies/{id}/forms/{formId}` - Delete K-1 form
-- `POST /api/companies/{id}/forms/{formId}/upload` - Upload K-1 PDF
+### Company Access Control
+- `GET /api/companies/{company}/users` - List users with access to company
+- `POST /api/companies/{company}/users` - Grant access to a user (requires `user_id`)
+- `DELETE /api/companies/{company}/users/{user}` - Revoke user's access to company
+- `GET /api/users/search?q={query}` - Search for users by email (for autocomplete)
+
+### K-1 Forms (Requires access to the related company)
+- `GET /api/ownership-interests/{interest}/k1s` - List K-1 forms for ownership interest
+- `POST /api/ownership-interests/{interest}/k1s` - Create K-1 form
+- `GET /api/forms/{form}` - Get K-1 form details
+- `PUT /api/forms/{form}` - Update K-1 form
+- `DELETE /api/forms/{form}` - Delete K-1 form
+- `POST /api/forms/{form}/upload` - Upload K-1 PDF
+- `POST /api/forms/{form}/extract-pdf` - Extract data from K-1 PDF using AI
 
 ### Form Sub-resources
-- `/api/forms/{id}/income-sources` - Income source CRUD
-- `/api/forms/{id}/outside-basis` - Outside basis CRUD
-- `/api/forms/{id}/outside-basis/adjustments` - OB adjustments CRUD
-- `/api/forms/{id}/loss-limitations` - Loss limitations CRUD
-- `/api/forms/{id}/loss-carryforwards` - Loss carryforwards CRUD
+- `/api/forms/{form}/income-sources` - Income source CRUD
+- `/api/ownership-interests/{interest}/basis/{year}` - Get/update outside basis for year
+- `/api/ownership-interests/{interest}/basis/{year}/adjustments` - Create basis adjustments
+- `/api/adjustments/{adjustment}` - Update/delete adjustment
+- `/api/ownership-interests/{interest}/losses/{year}` - Get/update loss limitations
+- `/api/ownership-interests/{interest}/carryforwards` - List/create loss carryforwards
+- `/api/carryforwards/{carryforward}` - Update/delete carryforward
 
-### Ownership
-- `GET /api/ownership` - List all ownership relationships
-- `POST /api/ownership` - Create ownership relationship
-- `PUT /api/ownership/{id}` - Update ownership
-- `DELETE /api/ownership/{id}` - Delete ownership
-- `GET /api/companies/{id}/owners` - Get owners of a company
-- `GET /api/companies/{id}/owned` - Get companies owned by a company
+### Ownership Interests (Requires access to related companies)
+- `GET /api/ownership-interests` - List all ownership interests
+- `POST /api/ownership-interests` - Create ownership relationship
+- `GET /api/ownership-interests/{interest}` - Get ownership interest details
+- `PUT /api/ownership-interests/{interest}` - Update ownership interest
+- `DELETE /api/ownership-interests/{interest}` - Delete ownership interest
+- `GET /api/companies/{company}/ownership-interests` - Get ownership interests where company is owner
+- `GET /api/companies/{company}/owned-by` - Get ownership interests where company is owned
 
 ## IRS References
 
