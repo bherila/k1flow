@@ -212,6 +212,12 @@ export default function K1FormDetail({ interestId, formId }: Props) {
           )}
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = `/ownership/${interestId}/k1-streamlined`}
+          >
+            Open Full View
+          </Button>
           <Button variant="outline" onClick={() => setUploadModalOpen(true)}>
             <FileUp className="mr-2 h-4 w-4" />
             Import K-1 PDF

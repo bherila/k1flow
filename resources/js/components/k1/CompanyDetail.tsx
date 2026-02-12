@@ -334,6 +334,13 @@ export default function CompanyDetail({ companyId }: Props) {
                                     )}
                                   </Button>
                                   <a 
+                                    href={`/ownership/${interest.id}/k1-streamlined`}
+                                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                                  >
+                                    <ArrowRight className="h-4 w-4" />
+                                    Multi-Year
+                                  </a>
+                                  <a 
                                     href={`/ownership/${interest.id}`}
                                     className="text-sm text-primary hover:underline flex items-center gap-1"
                                   >
@@ -451,6 +458,13 @@ export default function CompanyDetail({ companyId }: Props) {
                                      </>
                                    )}
                                  </Button>
+                                 <a 
+                                   href={`/ownership/${interest.id}/k1-streamlined`}
+                                   className="text-sm text-primary hover:underline flex items-center gap-1"
+                                 >
+                                   <ArrowRight className="h-4 w-4" />
+                                   Multi-Year
+                                 </a>
                                  <a 
                                    href={`/ownership/${interest.id}`}
                                    className="text-sm text-primary hover:underline flex items-center gap-1"

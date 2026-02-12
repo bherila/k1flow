@@ -65,6 +65,11 @@ Route::get('/ownership/{interestId}/k1/{formId}', function ($interestId, $formId
     return view('k1-form', ['interestId' => $interestId, 'formId' => $formId]);
 });
 
+// K-1 Streamlined multi-year view
+Route::get('/ownership/{interestId}/k1-streamlined', function ($interestId) {
+    return view('k1-form-streamlined', ['interestId' => $interestId]);
+});
+
 // Ownership Interest detail view (includes outside basis and loss limitations)
 
 Route::get('/ownership/{interestId}', function ($interestId) {
