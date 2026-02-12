@@ -25,6 +25,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::put('/users/{user}', [AdminUserController::class, 'update']);
     Route::delete('/users/{user}', [AdminUserController::class, 'destroy']);
     Route::get('/users/{user}/audit-log', [AdminUserController::class, 'auditLog']);
+    Route::get('/users/{user}/companies', [AdminUserController::class, 'userCompanies']);
 });
 
 // User search (for autocomplete in access control)

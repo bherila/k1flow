@@ -41,6 +41,7 @@ CREATE TABLE k1_companies(
   notes TEXT,
   created_at DATETIME,
   updated_at DATETIME,
+  deleted_at DATETIME,
   FOREIGN KEY(owner_user_id) REFERENCES users(id) ON DELETE RESTRICT
 );
 CREATE TABLE ownership_interests(
@@ -67,6 +68,7 @@ CREATE TABLE ownership_interests(
   notes TEXT,
   created_at DATETIME,
   updated_at DATETIME,
+  deleted_at DATETIME,
   FOREIGN KEY(owned_company_id) REFERENCES k1_companies(id) ON DELETE CASCADE,
   FOREIGN KEY(owner_company_id) REFERENCES k1_companies(id) ON DELETE CASCADE
 );
@@ -85,6 +87,7 @@ CREATE TABLE k1_income_sources(
   notes TEXT,
   created_at DATETIME,
   updated_at DATETIME,
+  deleted_at DATETIME,
   FOREIGN KEY(k1_form_id) REFERENCES k1_forms(id) ON DELETE CASCADE
 );
 CREATE INDEX k1_income_sources_k1_form_id_foreign ON k1_income_sources(
@@ -106,6 +109,7 @@ CREATE TABLE k1_f461_worksheets(
   notes TEXT,
   created_at DATETIME,
   updated_at DATETIME,
+  deleted_at DATETIME,
   FOREIGN KEY(ownership_interest_id) REFERENCES ownership_interests(id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX f461_interest_year_unique ON k1_f461_worksheets(
@@ -124,6 +128,7 @@ CREATE TABLE loss_carryforwards(
   notes TEXT,
   created_at DATETIME,
   updated_at DATETIME,
+  deleted_at DATETIME,
   FOREIGN KEY(ownership_interest_id) REFERENCES ownership_interests(id) ON DELETE CASCADE
 );
 CREATE INDEX loss_carryforwards_ownership_interest_id_foreign ON loss_carryforwards(
@@ -147,6 +152,7 @@ CREATE TABLE loss_limitations(
   notes TEXT,
   created_at DATETIME,
   updated_at DATETIME,
+  deleted_at DATETIME,
   FOREIGN KEY(ownership_interest_id) REFERENCES ownership_interests(id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX unique_loss_limit_per_year ON loss_limitations(
@@ -162,6 +168,7 @@ CREATE TABLE outside_basis(
   notes TEXT,
   created_at DATETIME,
   updated_at DATETIME,
+  deleted_at DATETIME,
   FOREIGN KEY(ownership_interest_id) REFERENCES ownership_interests(id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX unique_ob_per_year ON outside_basis(
@@ -181,6 +188,7 @@ CREATE TABLE ob_adjustments(
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at DATETIME,
   updated_at DATETIME,
+  deleted_at DATETIME,
   FOREIGN KEY(outside_basis_id) REFERENCES outside_basis(id) ON DELETE CASCADE
 );
 CREATE INDEX ob_adjustments_outside_basis_id_foreign ON ob_adjustments(
@@ -275,6 +283,7 @@ CREATE TABLE IF NOT EXISTS "k1_forms"(
   "notes" text,
   "created_at" datetime,
   "updated_at" datetime,
+  "deleted_at" datetime,
   "ownership_interest_id" integer,
   foreign key("ownership_interest_id") references ownership_interests("id") on delete cascade on update no action
 );

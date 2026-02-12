@@ -4,9 +4,12 @@ namespace App\Models\K1;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ObAdjustment extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'ob_adjustments';
 
     protected $fillable = [

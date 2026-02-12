@@ -3,15 +3,25 @@
 namespace App\Models\K1;
 
 use App\Traits\SerializesDatesAsLocal;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class K1Form extends Model
 {
-    use SerializesDatesAsLocal;
+    use HasFactory, SerializesDatesAsLocal, SoftDeletes;
 
     protected $table = 'k1_forms';
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\K1\K1FormFactory::new();
+    }
 
     protected $fillable = [
         'ownership_interest_id',

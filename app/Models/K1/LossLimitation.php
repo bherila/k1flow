@@ -4,9 +4,12 @@ namespace App\Models\K1;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LossLimitation extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'loss_limitations';
 
     protected $fillable = [

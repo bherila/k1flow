@@ -4,9 +4,12 @@ namespace App\Models\K1;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class K1IncomeSource extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'k1_income_sources';
 
     protected $fillable = [
