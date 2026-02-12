@@ -310,6 +310,16 @@ CREATE TABLE `ownership_interests` (
   CONSTRAINT `ownership_interests_owner_company_id_foreign` FOREIGN KEY (`owner_company_id`) REFERENCES `k1_companies` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `password_reset_tokens`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `password_reset_tokens` (
+  `email` varchar(255) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `sessions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -323,6 +333,48 @@ CREATE TABLE `sessions` (
   PRIMARY KEY (`id`),
   KEY `sessions_user_id_index` (`user_id`),
   KEY `sessions_last_activity_index` (`last_activity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `user_audit_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_audit_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `acting_user_id` bigint(20) unsigned DEFAULT NULL,
+  `event_name` enum('create','update','sign-in','reset-password','reset-password-request','reset-password-complete','email-change-request','email-change-complete','email-verify','sign-out','admin-lock','admin-unlock') NOT NULL,
+  `is_successful` tinyint(1) NOT NULL DEFAULT 1,
+  `message` text DEFAULT NULL,
+  `ip` varchar(45) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `user_audit_logs_user_id_foreign` (`user_id`),
+  KEY `user_audit_logs_acting_user_id_foreign` (`acting_user_id`),
+  CONSTRAINT `user_audit_logs_acting_user_id_foreign` FOREIGN KEY (`acting_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `user_audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `users` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `email_verified_at` timestamp NULL DEFAULT NULL,
+  `password` varchar(255) NOT NULL,
+  `pending_email` varchar(255) DEFAULT NULL,
+  `is_admin` tinyint(1) NOT NULL DEFAULT 0,
+  `is_disabled` tinyint(1) NOT NULL DEFAULT 0,
+  `force_change_pw` tinyint(1) NOT NULL DEFAULT 0,
+  `last_login_at` timestamp NULL DEFAULT NULL,
+  `remember_token` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `users_email_unique` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 --
@@ -352,3 +404,5 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (14,'2026_01_10_185
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (15,'2026_01_11_222423_create_k1_f461_worksheets_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (16,'2026_01_14_064216_create_jobs_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (17,'2026_01_21_174128_restructure_k1_forms_table',3);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (21,'2026_02_12_012222_create_users_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (23,'2026_02_12_012223_create_user_audit_logs_table',5);

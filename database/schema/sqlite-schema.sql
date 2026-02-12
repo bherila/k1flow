@@ -324,6 +324,5 @@ INSERT INTO migrations VALUES(14,'2026_01_10_185650_enhance_inception_basis_fiel
 INSERT INTO migrations VALUES(15,'2026_01_11_222423_create_k1_f461_worksheets_table',1);
 INSERT INTO migrations VALUES(16,'2026_01_14_064216_create_jobs_table',2);
 INSERT INTO migrations VALUES(17,'2026_01_21_174128_restructure_k1_forms_table',3);
-INSERT INTO migrations VALUES(18,'2026_02_12_012221_create_user_audit_logs_table',4);
-INSERT INTO migrations VALUES(19,'2026_02_12_012222_create_users_table',4);
-INSERT INTO migrations VALUES(20,'2026_02_12_012222_create_users_table',4);
+INSERT INTO migrations VALUES(21,'2026_02_12_012222_create_users_table',4);
+INSERT INTO migrations VALUES(23,'2026_02_12_012223_create_user_audit_logs_table',5);
