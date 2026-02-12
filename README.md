@@ -105,6 +105,24 @@ Or use multiple terminals:
 - Terminal 1: `php artisan serve`
 - Terminal 2: `pnpm run dev`
 
+### Artisan Commands
+
+A helper command is available to create users from the command line:
+
+- **Create a user interactively (prompts for password):**
+
+```bash
+php artisan user:create user@example.com "Full Name" --admin --verified
+```
+
+- **Create a user with an inline password:**
+
+```bash
+php artisan user:create user@example.com "Full Name" --password=secret123 --admin
+```
+
+The command supports flags: `--admin`, `--disabled`, and `--verified`.
+
 ### Testing
 
 Tests run against an in-memory SQLite database to ensure production data is never affected.
