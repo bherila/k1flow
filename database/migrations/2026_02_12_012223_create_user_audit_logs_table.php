@@ -11,29 +11,32 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_audit_logs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
-            $table->foreignId('acting_user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->enum('event_name', [
-                'create',
-                'update',
-                'sign-in',
-                'reset-password',
-                'reset-password-request',
-                'reset-password-complete',
-                'email-change-request',
-                'email-change-complete',
-                'email-verify',
-                'sign-out',
-                'admin-lock',
-                'admin-unlock'
-            ]);
-            $table->boolean('is_successful')->default(true);
-            $table->text('message')->nullable();
-            $table->string('ip', 45)->nullable();
-            $table->timestamps();
-        });
+        // Check if table already exists (it may be loaded from schema file)
+        if (!Schema::hasTable('user_audit_logs')) {
+            Schema::create('user_audit_logs', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
+                $table->foreignId('acting_user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->enum('event_name', [
+                    'create',
+                    'update',
+                    'sign-in',
+                    'reset-password',
+                    'reset-password-request',
+                    'reset-password-complete',
+                    'email-change-request',
+                    'email-change-complete',
+                    'email-verify',
+                    'sign-out',
+                    'admin-lock',
+                    'admin-unlock'
+                ]);
+                $table->boolean('is_successful')->default(true);
+                $table->text('message')->nullable();
+                $table->string('ip', 45)->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**
