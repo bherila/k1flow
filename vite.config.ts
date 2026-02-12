@@ -15,7 +15,8 @@ export default defineConfig({
                 'resources/js/ownership-interest.tsx',
                 'resources/js/ownership-basis-detail.tsx',
                 'resources/js/loss-limitation-detail.tsx',
-                'resources/js/home.tsx',
+                'resources/js/welcome.tsx',
+                'resources/js/companies.tsx',
                 'resources/js/navbar.tsx',
                 // Auth pages
                 'resources/js/auth/sign-in.tsx',
