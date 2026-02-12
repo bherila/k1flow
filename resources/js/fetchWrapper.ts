@@ -18,6 +18,7 @@ function get(url: string) {
   const requestOptions = {
     method: 'GET',
     credentials: 'include' as RequestCredentials,
+    headers: { 'Accept': 'application/json' },
   }
   return fetch(url, requestOptions).then(handleResponse)
 }
@@ -26,7 +27,7 @@ function post(url: string, body: any) {
   const isFormData = body instanceof FormData;
   const requestOptions: RequestInit = {
     method: 'POST',
-    headers: isFormData ? { 'X-CSRF-TOKEN': getCsrfToken() || '' } : { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() || '' },
+    headers: isFormData ? { 'X-CSRF-TOKEN': getCsrfToken() || '', 'Accept': 'application/json' } : { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() || '', 'Accept': 'application/json' },
     credentials: 'include' as RequestCredentials,
     body: isFormData ? body : JSON.stringify(body),
   }
@@ -36,7 +37,7 @@ function post(url: string, body: any) {
 function put(url: string, body: any) {
   const requestOptions: RequestInit = {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() || '' },
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken() || '', 'Accept': 'application/json' },
     credentials: 'include' as RequestCredentials,
     body: JSON.stringify(body),
   }
@@ -49,7 +50,8 @@ function _delete(url: string, body: any) {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': getCsrfToken() || ''
+      'X-CSRF-TOKEN': getCsrfToken() || '',
+      'Accept': 'application/json'
     },
     credentials: 'include',
     body: JSON.stringify(body),

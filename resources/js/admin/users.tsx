@@ -35,9 +35,13 @@ function AdminUsers() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response: PaginatedResponse = await fetchWrapper.get(`/api/admin/users?page=${currentPage}`);
-      setUsers(response.data);
-      setTotalPages(response.last_page);
+      const response: Partial<PaginatedResponse> | any = await fetchWrapper.get(`/api/admin/users?page=${currentPage}`);
+
+      const data = response && Array.isArray(response.data) ? response.data : [];
+      const lastPage = response && typeof response.last_page === 'number' ? response.last_page : 1;
+
+      setUsers(data);
+      setTotalPages(lastPage);
     } catch (error) {
       console.error('Error loading users:', error);
       alert('Error loading users');
