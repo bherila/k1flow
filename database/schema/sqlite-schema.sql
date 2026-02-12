@@ -43,21 +43,6 @@ CREATE TABLE k1_companies(
   updated_at DATETIME,
   FOREIGN KEY(owner_user_id) REFERENCES users(id) ON DELETE RESTRICT
 );
-CREATE TABLE company_user(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  company_id INTEGER NOT NULL,
-  user_id INTEGER NOT NULL,
-  created_at DATETIME,
-  updated_at DATETIME,
-  FOREIGN KEY(company_id) REFERENCES k1_companies(id) ON DELETE CASCADE,
-  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-CREATE UNIQUE INDEX company_user_company_id_user_id_unique ON company_user(
-  company_id,
-  user_id
-);
-CREATE INDEX company_user_company_id_foreign ON company_user(company_id);
-CREATE INDEX company_user_user_id_foreign ON company_user(user_id);
 CREATE TABLE ownership_interests(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   owner_company_id INTEGER,
