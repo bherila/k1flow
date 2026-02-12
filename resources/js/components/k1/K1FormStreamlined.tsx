@@ -173,7 +173,7 @@ export default function K1FormStreamlined({ interestId }: Props) {
   // Handle field change
   const handleChange = useCallback((year: number, field: keyof K1Form, value: any) => {
     const formData = getFormForYear(year);
-    formData[field] = value;
+    (formData as any)[field] = value;
     formsDataRef.current.set(year, formData);
     
     // Track pending changes
@@ -277,11 +277,13 @@ export default function K1FormStreamlined({ interestId }: Props) {
     const allFields = Object.values(K1_FIELDS).flat();
     if (nextRow >= 0 && nextRow < allFields.length && nextCol >= 0 && nextCol < totalCols) {
       const nextField = allFields[nextRow];
-      const nextYear = years[nextCol];
-      const cellKey = `${nextYear}-${nextField.key}`;
-      const nextCell = cellRefs.current.get(cellKey);
-      if (nextCell) {
-        nextCell.focus();
+      if (nextField) {
+        const nextYear = years[nextCol];
+        const cellKey = `${nextYear}-${nextField.key}`;
+        const nextCell = cellRefs.current.get(cellKey);
+        if (nextCell) {
+          nextCell.focus();
+        }
       }
     }
   }, [years]);
@@ -409,8 +411,9 @@ export default function K1FormStreamlined({ interestId }: Props) {
             </thead>
             <tbody>
               {allFieldsWithSections.map(({ section, field, globalIndex }, rowIndex) => {
+                const prevSection = allFieldsWithSections[rowIndex - 1];
                 const isFirstInSection = rowIndex === 0 || 
-                  allFieldsWithSections[rowIndex - 1].section !== section;
+                  (prevSection && prevSection.section !== section);
                 
                 return (
                   <>
