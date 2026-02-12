@@ -14,9 +14,12 @@ class K1FormTest extends TestCase
 
     public function test_can_create_and_retrieve_k1_form_for_ownership_interest()
     {
-        // 1. Setup
-        $owner = K1Company::create(['name' => 'Owner']);
-        $owned = K1Company::create(['name' => 'Owned']);
+        // 1. Setup - create user and companies with ownership
+        $user = \App\Models\User::factory()->create();
+        $this->actingAs($user);
+        
+        $owner = K1Company::create(['name' => 'Owner', 'owner_user_id' => $user->id]);
+        $owned = K1Company::create(['name' => 'Owned', 'owner_user_id' => $user->id]);
 
         $interest = OwnershipInterest::create([
             'owner_company_id' => $owner->id,

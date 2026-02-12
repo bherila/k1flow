@@ -18,6 +18,8 @@ import { formatPercentage } from '@/lib/currency';
 import type { K1Company, OwnershipInterest } from '@/types/k1';
 
 import AddOwnershipInterest from './AddOwnershipInterest';
+import CompanyNameControl from './CompanyNameControl';
+import CompanyAccessControl from './CompanyAccessControl';
 
 interface Props {
   companyId: number;
@@ -142,7 +144,7 @@ export default function CompanyDetail({ companyId }: Props) {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold">Company not found</h2>
-        <Button variant="link" onClick={() => window.location.href = '/'}>
+        <Button variant="link" onClick={() => window.location.href = '/companies'}>
           <ChevronLeft className="mr-2 h-4 w-4" />
           Back to companies
         </Button>
@@ -156,25 +158,35 @@ export default function CompanyDetail({ companyId }: Props) {
     <div className="space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <a href="/" className="hover:text-foreground">Companies</a>
+        <a href="/companies" className="hover:text-foreground">Companies</a>
         <ChevronRight className="h-4 w-4" />
         <span className="text-foreground">{company.name}</span>
       </div>
 
       {/* Company Header */}
       <div className="flex items-start justify-between">
-        <div>
+        <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold tracking-tight">{company.name}</h1>
-          <div className="flex items-center gap-4 mt-2 text-muted-foreground">
-            {company.ein && <span className="font-mono">EIN: {company.ein}</span>}
-            {company.entity_type && <span>{company.entity_type}</span>}
-          </div>
+          <CompanyNameControl 
+            companyId={companyId}
+            currentName={company.name}
+            onNameUpdated={(newName) => setCompany({ ...company, name: newName })}
+          />
         </div>
-        <AddOwnershipInterest 
-          ownerCompanyId={companyId}
-          availableCompanies={availableCompaniesToOwn}
-          onSuccess={reloadInterests}
-        />
+        <div className="flex items-center gap-2">
+          <CompanyAccessControl companyId={companyId} />
+          <AddOwnershipInterest 
+            ownerCompanyId={companyId}
+            availableCompanies={availableCompaniesToOwn}
+            onSuccess={reloadInterests}
+          />
+        </div>
+      </div>
+
+      {/* Company Details */}
+      <div className="flex items-center gap-4 text-muted-foreground">
+        {company.ein && <span className="font-mono">EIN: {company.ein}</span>}
+        {company.entity_type && <span>{company.entity_type}</span>}
       </div>
 
       <Tabs defaultValue="year" className="w-full">

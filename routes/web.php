@@ -38,9 +38,17 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users');
 });
 
-// Home page with company list
+// Home page with welcome message (redirects to companies if logged in)
 Route::get('/', function () {
-    return view('welcome');
+    if (auth()->check()) {
+        return redirect('/companies');
+    }
+    return view('welcome-new');
+});
+
+// Companies list page (requires auth)
+Route::middleware('auth')->get('/companies', function () {
+    return view('companies');
 });
 
 // Company detail view with K-1 forms and ownership interests

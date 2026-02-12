@@ -16,9 +16,13 @@ class OutsideBasisTest extends TestCase
     public function test_basis_walk_calculation_flow()
     {
         // 1. Setup Data
+        // Create user and authenticate
+        $user = \App\Models\User::factory()->create();
+        $this->actingAs($user);
+        
         // Create companies
-        $owner = K1Company::create(['name' => 'Owner Corp']);
-        $owned = K1Company::create(['name' => 'Owned LLC']);
+        $owner = K1Company::create(['name' => 'Owner Corp', 'owner_user_id' => $user->id]);
+        $owned = K1Company::create(['name' => 'Owned LLC', 'owner_user_id' => $user->id]);
 
         // Create ownership interest with inception basis
         $interest = OwnershipInterest::create([

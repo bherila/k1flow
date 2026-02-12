@@ -8,6 +8,7 @@ use App\Http\Controllers\K1\OwnershipInterestController;
 use App\Http\Controllers\K1\OutsideBasisController;
 use App\Http\Controllers\K1\LossLimitationController;
 use App\Http\Controllers\K1\F461WorksheetController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,8 +27,20 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/users/{user}/audit-log', [AdminUserController::class, 'auditLog']);
 });
 
-// Companies
-Route::apiResource('companies', K1CompanyController::class);
+// User search (for autocomplete in access control)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/users/search', [UserController::class, 'search']);
+});
+
+// Companies (require auth)
+Route::middleware(['auth'])->group(function () {
+    Route::apiResource('companies', K1CompanyController::class);
+    
+    // Company user management
+    Route::get('/companies/{company}/users', [K1CompanyController::class, 'listUsers']);
+    Route::post('/companies/{company}/users', [K1CompanyController::class, 'grantAccess']);
+    Route::delete('/companies/{company}/users/{user}', [K1CompanyController::class, 'revokeAccess']);
+});
 
 // K-1 Forms (nested under ownership interests)
 Route::prefix('ownership-interests/{interest}')->group(function () {

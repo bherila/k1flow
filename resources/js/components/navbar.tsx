@@ -95,7 +95,7 @@ export default function Navbar({ authenticated, isAdmin, user }: NavbarProps) {
           <h1 className='text-lg font-semibold tracking-tight'>K1 Flow</h1>
         </a>
         <ul className='hidden md:flex items-center gap-4 text-sm'>
-          <li><a className='hover:underline underline-offset-4' href='/'>Companies</a></li>
+          <li><a className='hover:underline underline-offset-4' href='/companies'>Companies</a></li>
           {isAdmin && (
             <li><a className='hover:underline underline-offset-4' href='/admin/users'>Admin</a></li>
           )}

@@ -8,6 +8,16 @@ CREATE TABLE cache_locks(
   owner TEXT NOT NULL,
   expiration INTEGER NOT NULL
 );
+CREATE TABLE company_user(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  company_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  created_at DATETIME,
+  updated_at DATETIME,
+  FOREIGN KEY(company_id) REFERENCES k1_companies(id) ON DELETE CASCADE,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(company_id, user_id)
+);
 CREATE TABLE jobs(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   queue TEXT NOT NULL,
@@ -20,6 +30,7 @@ CREATE TABLE jobs(
 CREATE INDEX jobs_queue_index ON jobs(queue);
 CREATE TABLE k1_companies(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_user_id INTEGER,
   name TEXT NOT NULL,
   ein TEXT,
   entity_type TEXT,
@@ -29,7 +40,8 @@ CREATE TABLE k1_companies(
   zip TEXT,
   notes TEXT,
   created_at DATETIME,
-  updated_at DATETIME
+  updated_at DATETIME,
+  FOREIGN KEY(owner_user_id) REFERENCES users(id) ON DELETE RESTRICT
 );
 CREATE TABLE ownership_interests(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -326,3 +338,5 @@ INSERT INTO migrations VALUES(16,'2026_01_14_064216_create_jobs_table',2);
 INSERT INTO migrations VALUES(17,'2026_01_21_174128_restructure_k1_forms_table',3);
 INSERT INTO migrations VALUES(21,'2026_02_12_012222_create_users_table',4);
 INSERT INTO migrations VALUES(23,'2026_02_12_012223_create_user_audit_logs_table',5);
+INSERT INTO migrations VALUES(24,'2026_02_12_021227_add_owner_user_id_to_k1_companies_table',6);
+INSERT INTO migrations VALUES(25,'2026_02_12_021227_create_company_user_table',6);
