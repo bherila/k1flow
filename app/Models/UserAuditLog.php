@@ -51,14 +51,16 @@ class UserAuditLog extends Model
      * Create an audit log entry.
      */
     public static function log(
-        int $userId,
+        ?int $userId,
         string $eventName,
         bool $isSuccessful = true,
         ?string $message = null,
         ?int $actingUserId = null
     ): self {
+        $userIdToStore = (is_int($userId) && $userId > 0) ? $userId : null;
+
         return self::create([
-            'user_id' => $userId,
+            'user_id' => $userIdToStore,
             'acting_user_id' => $actingUserId ?? auth()->id(),
             'event_name' => $eventName,
             'is_successful' => $isSuccessful,
