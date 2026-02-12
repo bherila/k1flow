@@ -86,7 +86,7 @@ DROP TABLE IF EXISTS `k1_forms`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `k1_forms` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `company_id` bigint(20) unsigned NOT NULL,
+  `ownership_interest_id` bigint(20) unsigned DEFAULT NULL,
   `tax_year` int(11) NOT NULL,
   `form_file_path` varchar(255) DEFAULT NULL,
   `form_file_name` varchar(255) DEFAULT NULL,
@@ -160,8 +160,8 @@ CREATE TABLE `k1_forms` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `k1_forms_company_id_tax_year_unique` (`company_id`,`tax_year`),
-  CONSTRAINT `k1_forms_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `k1_companies` (`id`) ON DELETE CASCADE
+  UNIQUE KEY `k1_forms_ownership_interest_id_tax_year_unique` (`ownership_interest_id`,`tax_year`),
+  CONSTRAINT `k1_forms_ownership_interest_id_foreign` FOREIGN KEY (`ownership_interest_id`) REFERENCES `ownership_interests` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `k1_income_sources`;
@@ -326,7 +326,7 @@ CREATE TABLE `sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 --
--- WARNING: can't read the INFORMATION_SCHEMA.libraries table. It's most probably an old server 5.5.5-10.6.24-MariaDB.
+-- WARNING: can't read the INFORMATION_SCHEMA.libraries table. It's most probably an old server 5.5.5-10.6.25-MariaDB.
 --
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -351,3 +351,4 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (13,'2026_01_05_000
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (14,'2026_01_10_185650_enhance_inception_basis_fields',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (15,'2026_01_11_222423_create_k1_f461_worksheets_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (16,'2026_01_14_064216_create_jobs_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (17,'2026_01_21_174128_restructure_k1_forms_table',3);
