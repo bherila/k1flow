@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Listeners\UpdateLastLoginDate;
 use App\Models\ClientManagement\ClientCompany;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
@@ -25,7 +24,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Register login event listener
-        Event::listen(Login::class, UpdateLastLoginDate::class);
+        // Event::listen(Login::class, UpdateLastLoginDate::class);
+        // NOTE: last_login_at is now handled directly in AuthController
 
         // Admin gate - check if user has admin role
         Gate::define('admin', function ($user) {
