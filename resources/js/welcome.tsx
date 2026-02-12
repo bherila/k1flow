@@ -2,6 +2,7 @@ import './bootstrap';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+
 import { Button } from '@/components/ui/button';
 
 function Welcome() {

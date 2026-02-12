@@ -1,4 +1,4 @@
-import {Laptop, Moon, Sun, User, Settings, LogOut } from 'lucide-react';
+import {Laptop, LogOut,Moon, Settings, Sun } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 type NavbarProps = {

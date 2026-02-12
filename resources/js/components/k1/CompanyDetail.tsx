@@ -18,8 +18,8 @@ import { formatPercentage } from '@/lib/currency';
 import type { K1Company, OwnershipInterest } from '@/types/k1';
 
 import AddOwnershipInterest from './AddOwnershipInterest';
-import CompanyNameControl from './CompanyNameControl';
 import CompanyAccessControl from './CompanyAccessControl';
+import CompanyNameControl from './CompanyNameControl';
 
 interface Props {
   companyId: number;
