@@ -63,11 +63,29 @@ Route::get('/company/{id}', function ($id) {
 });
 
 // K-1 Form detail/edit view
-Route::get('/ownership/{interestId}/k1/{formId}', function ($interestId, $formId) {
-    $form = \App\Models\K1\K1Form::with('ownershipInterest.ownedCompany')->findOrFail($formId);
-    $companyName = $form->ownershipInterest && $form->ownershipInterest->ownedCompany ? $form->ownershipInterest->ownedCompany->name : null;
-    $formYear = $form->tax_year ?? null;
-    return view('k1-form', ['interestId' => $interestId, 'formId' => $formId, 'companyName' => $companyName, 'formYear' => $formYear]);
+Route::get('/ownership/{interestId}/k1/{taxYear}', function ($interestId, $taxYear) {
+    $interest = \App\Models\K1\OwnershipInterest::with('ownedCompany')->findOrFail($interestId);
+    $form = \App\Models\K1\K1Form::where('ownership_interest_id', $interest->id)
+        ->where('tax_year', (int) $taxYear)
+        ->first();
+
+    $currentYear = (int) now()->format('Y');
+    $startYear = $interest->inception_basis_year
+        ?? ($interest->effective_from ? (int) $interest->effective_from->format('Y') : $currentYear);
+    $endYear = $interest->effective_to
+        ? (int) $interest->effective_to->format('Y')
+        : $currentYear;
+
+    $isOutOfBounds = (int) $taxYear < $startYear || (int) $taxYear > $endYear;
+    if ($isOutOfBounds) {
+        if ($form) {
+            abort(403);
+        }
+        abort(404);
+    }
+
+    $companyName = $interest->ownedCompany?->name ?? null;
+    return view('k1-form', ['interestId' => $interestId, 'taxYear' => (int) $taxYear, 'companyName' => $companyName, 'formYear' => (int) $taxYear]);
 });
 
 // K-1 Streamlined multi-year view

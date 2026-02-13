@@ -15,10 +15,10 @@ import type { K1Form, OwnershipInterest } from '@/types/k1';
 
 interface Props {
   interestId: number;
-  formId: number;
+  taxYear: number;
 }
 
-export default function K1FormDetail({ interestId, formId }: Props) {
+export default function K1FormDetail({ interestId, taxYear }: Props) {
   const [form, setForm] = useState<K1Form | null>(null);
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +38,7 @@ export default function K1FormDetail({ interestId, formId }: Props) {
   const loadData = useCallback(async () => {
     try {
       const [formDataResult, interestResult] = await Promise.all([
-        fetchWrapper.get(`/api/forms/${formId}`),
+        fetchWrapper.get(`/api/ownership-interests/${interestId}/k1s/${taxYear}`),
         fetchWrapper.get(`/api/ownership-interests/${interestId}`),
       ]);
       setForm(formDataResult);
@@ -49,7 +49,7 @@ export default function K1FormDetail({ interestId, formId }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [formId, interestId]);
+  }, [interestId, taxYear]);
 
   useEffect(() => {
     loadData();
@@ -62,8 +62,8 @@ export default function K1FormDetail({ interestId, formId }: Props) {
     setSaveStatus('saving');
     setSaving(true);
     try {
-      const payload = { [field]: formDataRef.current[field] };
-      const updated = await fetchWrapper.put(`/api/forms/${formId}`, payload);
+      const payload = { tax_year: taxYear, [field]: formDataRef.current[field] };
+      const updated = await fetchWrapper.post(`/api/ownership-interests/${interestId}/k1s`, payload);
       // Only update the ref, not the state, to prevent re-render and focus loss
       formDataRef.current = { ...updated };
       pendingChangesRef.current.delete(field);
@@ -75,7 +75,7 @@ export default function K1FormDetail({ interestId, formId }: Props) {
     } finally {
       setSaving(false);
     }
-  }, [formId]);
+  }, [interestId, taxYear]);
 
   // Handle field change - stores in ref without re-render
   const handleChange = useCallback((field: keyof K1Form, value: any) => {
@@ -88,7 +88,10 @@ export default function K1FormDetail({ interestId, formId }: Props) {
     setSaving(true);
     setSaveStatus('saving');
     try {
-      const updated = await fetchWrapper.put(`/api/forms/${formId}`, formDataRef.current);
+      const updated = await fetchWrapper.post(`/api/ownership-interests/${interestId}/k1s`, {
+        ...formDataRef.current,
+        tax_year: taxYear,
+      });
       setForm(updated);
       formDataRef.current = { ...updated };
       pendingChangesRef.current.clear();
@@ -117,7 +120,7 @@ export default function K1FormDetail({ interestId, formId }: Props) {
       setUploadProgress('Processing with Gemini AI... This may take a moment.');
       
       const result = await fetchWrapper.post(
-        `/api/forms/${formId}/extract-pdf`,
+        `/api/ownership-interests/${interestId}/k1s/${taxYear}/extract-pdf`,
         formData
       );
 

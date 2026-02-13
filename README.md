@@ -198,15 +198,14 @@ For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md).
 
 ### K-1 Forms (Requires access to the related company)
 - `GET /api/ownership-interests/{interest}/k1s` - List K-1 forms for ownership interest
-- `POST /api/ownership-interests/{interest}/k1s` - Create K-1 form
-- `GET /api/forms/{form}` - Get K-1 form details
-- `PUT /api/forms/{form}` - Update K-1 form
-- `DELETE /api/forms/{form}` - Delete K-1 form
-- `POST /api/forms/{form}/upload` - Upload K-1 PDF
-- `POST /api/forms/{form}/extract-pdf` - Extract data from K-1 PDF using AI
+- `POST /api/ownership-interests/{interest}/k1s` - Upsert K-1 form by `tax_year` in payload
+- `GET /api/ownership-interests/{interest}/k1s/{taxYear}` - Get K-1 form details for tax year (or in-bounds empty payload)
+- `DELETE /api/ownership-interests/{interest}/k1s/{taxYear}` - Delete K-1 form for tax year
+- `POST /api/ownership-interests/{interest}/k1s/{taxYear}/upload` - Upload K-1 PDF
+- `POST /api/ownership-interests/{interest}/k1s/{taxYear}/extract-pdf` - Extract data from K-1 PDF using AI
 
 ### Form Sub-resources
-- `/api/forms/{form}/income-sources` - Income source CRUD
+- `/api/ownership-interests/{interest}/k1s/{taxYear}/income-sources` - Income source CRUD
 - `/api/ownership-interests/{interest}/basis/{year}` - Get/update outside basis for year
 - `/api/ownership-interests/{interest}/basis/{year}/adjustments` - Create basis adjustments
 - `/api/adjustments/{adjustment}` - Update/delete adjustment

@@ -50,11 +50,18 @@ Each `K1Cell` component manages its own value via `useState`, independent of the
 
 ### Ref-Based Data Store
 
-Form data is stored in `useRef` maps (`formsDataRef` and `formsIdRef`), not React state. This means:
+Form data is stored in a `useRef` map (`formsDataRef`), not React state. This means:
 
 - Updates to form data **do not trigger re-renders**.
-- The `formsIdRef` tracks server-side IDs to decide PUT vs POST.
+- Saves always call a single **POST upsert** endpoint keyed by `ownership interest + tax year`.
 - After a successful save, the server response updates the ref silently.
+
+### Year-Keyed K-1 Access
+
+K-1 forms are addressed by `ownership_interest_id + tax_year` (not by K-1 row ID):
+
+- `GET /api/ownership-interests/{interest}/k1s/{taxYear}`
+- `POST /api/ownership-interests/{interest}/k1s` (upsert; includes `tax_year`)
 
 ### Component Structure
 

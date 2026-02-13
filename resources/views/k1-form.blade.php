@@ -5,7 +5,7 @@
 @section('content')
   <div id="k1-form-detail" 
     data-interest-id="{{ $interestId }}" 
-    data-form-id="{{ $formId }}"
+    data-tax-year="{{ $taxYear }}"
     data-company-name="{{ $companyName ?? '' }}"
     data-form-year="{{ $formYear ?? '' }}"
   ></div>

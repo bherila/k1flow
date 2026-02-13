@@ -115,8 +115,6 @@ export default function K1FormStreamlined({ interestId }: Props) {
   // Store form data in refs — client state is source of truth.
   // formsDataRef: year -> field values (mutable, not linked to React state)
   const formsDataRef = useRef<Map<number, Partial<K1Form>>>(new Map());
-  // formsIdRef: year -> server form id (for PUT vs POST decisions)
-  const formsIdRef = useRef<Map<number, number>>(new Map());
 
   // Track currently focused cell for navigation
   const cellRefs = useRef<Map<string, HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>>(new Map());
@@ -131,13 +129,10 @@ export default function K1FormStreamlined({ interestId }: Props) {
 
       // Initialize refs from loaded data
       const dataMap = new Map<number, Partial<K1Form>>();
-      const idMap = new Map<number, number>();
       formsResult.forEach((form: K1Form) => {
         dataMap.set(form.tax_year, { ...form });
-        idMap.set(form.tax_year, form.id);
       });
       formsDataRef.current = dataMap;
-      formsIdRef.current = idMap;
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -186,22 +181,9 @@ export default function K1FormStreamlined({ interestId }: Props) {
     const toastId = toast.loading(`Saving ${year}...`);
 
     try {
-      const existingId = formsIdRef.current.get(year);
-      const payload = { [field]: value };
+      const payload = { tax_year: year, [field]: value };
 
-      let updated: K1Form;
-      if (existingId) {
-        // Update existing form
-        updated = await fetchWrapper.put(`/api/forms/${existingId}`, payload);
-      } else {
-        // Create new form for this year
-        updated = await fetchWrapper.post(`/api/ownership-interests/${interestId}/k1s`, {
-          tax_year: year,
-          ...payload,
-        });
-        // Track the new form id so future saves use PUT
-        formsIdRef.current.set(year, updated.id);
-      }
+      const updated = await fetchWrapper.post(`/api/ownership-interests/${interestId}/k1s`, payload);
 
       // Silently update ref data with server response — no state change, no re-render
       formsDataRef.current.set(year, { ...updated });
@@ -380,20 +362,15 @@ export default function K1FormStreamlined({ interestId }: Props) {
                   Field
                 </th>
                 {years.map((year) => {
-                  const existingId = formsIdRef.current.get(year);
                   return (
                     <th key={year} className="p-3 text-center border-b font-semibold min-w-[150px] bg-muted">
-                      <button
-                        onClick={() => {
-                          if (existingId) {
-                            window.location.href = `/ownership/${interestId}/k1/${existingId}`;
-                          }
-                        }}
+                      <a
+                        href={`/ownership/${interestId}/k1/${year}`}
                         className="hover:underline cursor-pointer text-primary"
-                        title={existingId ? "Click to view single-year form" : "No form for this year yet"}
+                        title="Click to view single-year form"
                       >
                         {year}
-                      </button>
+                      </a>
                     </th>
                   );
                 })}

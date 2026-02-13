@@ -9,7 +9,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 
 class K1FormController extends Controller
 {
@@ -29,108 +28,44 @@ class K1FormController extends Controller
     }
 
     /**
-     * Store a newly created K-1 form for an ownership interest.
+     * Upsert a K-1 form for an ownership interest.
      */
     public function store(Request $request, OwnershipInterest $interest): JsonResponse
     {
         $company = $interest->ownedCompany;
         Gate::authorize('access-company', $company);
 
-        $validated = $request->validate([
-            'tax_year' => [
-                'required',
-                'integer',
-                'min:1900',
-                'max:2100',
-                Rule::unique('k1_forms')->where(function ($query) use ($interest) {
-                    return $query->where('ownership_interest_id', $interest->id);
-                }),
-            ],
-            // Part I
-            'partnership_name' => 'nullable|string|max:255',
-            'partnership_address' => 'nullable|string|max:500',
-            'partnership_ein' => 'nullable|string|max:20',
-            'partnership_tax_year_begin' => 'nullable|date',
-            'partnership_tax_year_end' => 'nullable|date',
-            'irs_center' => 'nullable|string|max:100',
-            'is_publicly_traded' => 'nullable|boolean',
-            // Part II
-            'partner_ssn_ein' => 'nullable|string|max:20',
-            'partner_name' => 'nullable|string|max:255',
-            'partner_address' => 'nullable|string|max:500',
-            'is_general_partner' => 'nullable|boolean',
-            'is_limited_partner' => 'nullable|boolean',
-            'is_domestic_partner' => 'nullable|boolean',
-            'is_foreign_partner' => 'nullable|boolean',
-            'is_disregarded_entity' => 'nullable|boolean',
-            'entity_type_code' => 'nullable|string|max:10',
-            'is_retirement_plan' => 'nullable|boolean',
-            // Share percentages
-            'share_of_profit_beginning' => 'nullable|numeric|min:0|max:100',
-            'share_of_profit_ending' => 'nullable|numeric|min:0|max:100',
-            'share_of_loss_beginning' => 'nullable|numeric|min:0|max:100',
-            'share_of_loss_ending' => 'nullable|numeric|min:0|max:100',
-            'share_of_capital_beginning' => 'nullable|numeric|min:0|max:100',
-            'share_of_capital_ending' => 'nullable|numeric|min:0|max:100',
-            // Liabilities
-            'nonrecourse_liabilities' => 'nullable|numeric',
-            'qualified_nonrecourse_financing' => 'nullable|numeric',
-            'recourse_liabilities' => 'nullable|numeric',
-            'total_liabilities' => 'nullable|numeric',
-            // Capital account
-            'beginning_capital_account' => 'nullable|numeric',
-            'capital_contributed' => 'nullable|numeric',
-            'current_year_income_loss' => 'nullable|numeric',
-            'withdrawals_distributions' => 'nullable|numeric',
-            'other_increase_decrease' => 'nullable|numeric',
-            'ending_capital_account' => 'nullable|numeric',
-            'capital_account_tax_basis' => 'nullable|boolean',
-            'capital_account_gaap' => 'nullable|boolean',
-            'capital_account_section_704b' => 'nullable|boolean',
-            'capital_account_other' => 'nullable|boolean',
-            'capital_account_other_description' => 'nullable|string|max:255',
-            // Part III boxes (major ones)
-            'box_1_ordinary_income' => 'nullable|numeric',
-            'box_2_net_rental_real_estate' => 'nullable|numeric',
-            'box_3_other_net_rental' => 'nullable|numeric',
-            'box_4a_guaranteed_payments_services' => 'nullable|numeric',
-            'box_4b_guaranteed_payments_capital' => 'nullable|numeric',
-            'box_4c_guaranteed_payments_total' => 'nullable|numeric',
-            'box_5_interest_income' => 'nullable|numeric',
-            'box_6a_ordinary_dividends' => 'nullable|numeric',
-            'box_6b_qualified_dividends' => 'nullable|numeric',
-            'box_6c_dividend_equivalents' => 'nullable|numeric',
-            'box_7_royalties' => 'nullable|numeric',
-            'box_8_net_short_term_capital_gain' => 'nullable|numeric',
-            'box_9a_net_long_term_capital_gain' => 'nullable|numeric',
-            'box_9b_collectibles_gain' => 'nullable|numeric',
-            'box_9c_unrecaptured_1250_gain' => 'nullable|numeric',
-            'box_10_net_section_1231_gain' => 'nullable|numeric',
-            'box_11_other_income' => 'nullable|string',
-            'box_12_section_179_deduction' => 'nullable|numeric',
-            'box_13_other_deductions' => 'nullable|string',
-            'box_14_self_employment_earnings' => 'nullable|numeric',
-            'box_15_credits' => 'nullable|string',
-            'box_16_foreign_transactions' => 'nullable|string',
-            'box_17_amt_items' => 'nullable|string',
-            'box_18_tax_exempt_income' => 'nullable|string',
-            'box_19_distributions' => 'nullable|string',
-            'box_20_other_info' => 'nullable|string',
-            'box_21_foreign_taxes_paid' => 'nullable|string',
-            'box_22_more_info' => 'nullable|string',
-            'notes' => 'nullable|string',
-        ]);
+        $validated = $request->validate($this->k1ValidationRules(true));
+
+        $taxYear = (int) $validated['tax_year'];
+        $existing = $interest->k1FormForYear($taxYear);
+
+        if ($this->isTaxYearOutOfBounds($interest, $taxYear)) {
+            if ($existing) {
+                return response()->json([
+                    'error' => 'K-1 data exists for an out-of-bounds tax year and cannot be accessed.',
+                ], 403);
+            }
+
+            return response()->json([
+                'error' => 'Tax year is out of bounds for this ownership interest.',
+            ], 422);
+        }
 
         $validated['ownership_interest_id'] = $interest->id;
-        
-        // Default tax year begin/end if not provided
+
         if (empty($validated['partnership_tax_year_begin'])) {
-            $validated['partnership_tax_year_begin'] = $validated['tax_year'] . '-01-01';
+            $validated['partnership_tax_year_begin'] = $taxYear . '-01-01';
         }
         if (empty($validated['partnership_tax_year_end'])) {
-            $validated['partnership_tax_year_end'] = $validated['tax_year'] . '-12-31';
+            $validated['partnership_tax_year_end'] = $taxYear . '-12-31';
         }
-        
+
+        if ($existing) {
+            $existing->update($validated);
+            return response()->json($existing);
+        }
+
         $form = K1Form::create($validated);
 
         return response()->json($form, 201);
@@ -139,108 +74,29 @@ class K1FormController extends Controller
     /**
      * Display the specified K-1 form.
      */
-    public function show(K1Form $form): JsonResponse
+    public function show(OwnershipInterest $interest, int $taxYear): JsonResponse
     {
-        $form->load(['ownershipInterest.ownedCompany']);
-        $company = $form->ownershipInterest->ownedCompany;
+        $company = $interest->ownedCompany;
         Gate::authorize('access-company', $company);
 
-        $form->load(['incomeSources', 'ownershipInterest.ownedCompany']);
+        $form = $interest->k1Forms()
+            ->where('tax_year', $taxYear)
+            ->with(['incomeSources', 'ownershipInterest.ownedCompany'])
+            ->first();
 
-        return response()->json($form);
-    }
+        if ($this->isTaxYearOutOfBounds($interest, $taxYear)) {
+            if ($form) {
+                return response()->json([
+                    'error' => 'K-1 data exists for an out-of-bounds tax year and cannot be accessed.',
+                ], 403);
+            }
 
-    /**
-     * Update the specified K-1 form.
-     */
-    public function update(Request $request, K1Form $form): JsonResponse
-    {
-        $form->load(['ownershipInterest.ownedCompany']);
-        $company = $form->ownershipInterest->ownedCompany;
-        Gate::authorize('access-company', $company);
+            abort(404);
+        }
 
-        $validated = $request->validate([
-            'tax_year' => [
-                'sometimes',
-                'required',
-                'integer',
-                'min:1900',
-                'max:2100',
-                Rule::unique('k1_forms')->where(function ($query) use ($form) {
-                    return $query->where('ownership_interest_id', $form->ownership_interest_id);
-                })->ignore($form->id),
-            ],
-            // All other fields same as store...
-            'partnership_name' => 'nullable|string|max:255',
-            'partnership_address' => 'nullable|string|max:500',
-            'partnership_ein' => 'nullable|string|max:20',
-            'partnership_tax_year_begin' => 'nullable|date',
-            'partnership_tax_year_end' => 'nullable|date',
-            'irs_center' => 'nullable|string|max:100',
-            'is_publicly_traded' => 'nullable|boolean',
-            'partner_ssn_ein' => 'nullable|string|max:20',
-            'partner_name' => 'nullable|string|max:255',
-            'partner_address' => 'nullable|string|max:500',
-            'is_general_partner' => 'nullable|boolean',
-            'is_limited_partner' => 'nullable|boolean',
-            'is_domestic_partner' => 'nullable|boolean',
-            'is_foreign_partner' => 'nullable|boolean',
-            'is_disregarded_entity' => 'nullable|boolean',
-            'entity_type_code' => 'nullable|string|max:10',
-            'is_retirement_plan' => 'nullable|boolean',
-            'share_of_profit_beginning' => 'nullable|numeric|min:0|max:100',
-            'share_of_profit_ending' => 'nullable|numeric|min:0|max:100',
-            'share_of_loss_beginning' => 'nullable|numeric|min:0|max:100',
-            'share_of_loss_ending' => 'nullable|numeric|min:0|max:100',
-            'share_of_capital_beginning' => 'nullable|numeric|min:0|max:100',
-            'share_of_capital_ending' => 'nullable|numeric|min:0|max:100',
-            'nonrecourse_liabilities' => 'nullable|numeric',
-            'qualified_nonrecourse_financing' => 'nullable|numeric',
-            'recourse_liabilities' => 'nullable|numeric',
-            'total_liabilities' => 'nullable|numeric',
-            'beginning_capital_account' => 'nullable|numeric',
-            'capital_contributed' => 'nullable|numeric',
-            'current_year_income_loss' => 'nullable|numeric',
-            'withdrawals_distributions' => 'nullable|numeric',
-            'other_increase_decrease' => 'nullable|numeric',
-            'ending_capital_account' => 'nullable|numeric',
-            'capital_account_tax_basis' => 'nullable|boolean',
-            'capital_account_gaap' => 'nullable|boolean',
-            'capital_account_section_704b' => 'nullable|boolean',
-            'capital_account_other' => 'nullable|boolean',
-            'capital_account_other_description' => 'nullable|string|max:255',
-            'box_1_ordinary_income' => 'nullable|numeric',
-            'box_2_net_rental_real_estate' => 'nullable|numeric',
-            'box_3_other_net_rental' => 'nullable|numeric',
-            'box_4a_guaranteed_payments_services' => 'nullable|numeric',
-            'box_4b_guaranteed_payments_capital' => 'nullable|numeric',
-            'box_4c_guaranteed_payments_total' => 'nullable|numeric',
-            'box_5_interest_income' => 'nullable|numeric',
-            'box_6a_ordinary_dividends' => 'nullable|numeric',
-            'box_6b_qualified_dividends' => 'nullable|numeric',
-            'box_6c_dividend_equivalents' => 'nullable|numeric',
-            'box_7_royalties' => 'nullable|numeric',
-            'box_8_net_short_term_capital_gain' => 'nullable|numeric',
-            'box_9a_net_long_term_capital_gain' => 'nullable|numeric',
-            'box_9b_collectibles_gain' => 'nullable|numeric',
-            'box_9c_unrecaptured_1250_gain' => 'nullable|numeric',
-            'box_10_net_section_1231_gain' => 'nullable|numeric',
-            'box_11_other_income' => 'nullable|string',
-            'box_12_section_179_deduction' => 'nullable|numeric',
-            'box_13_other_deductions' => 'nullable|string',
-            'box_14_self_employment_earnings' => 'nullable|numeric',
-            'box_15_credits' => 'nullable|string',
-            'box_16_foreign_transactions' => 'nullable|string',
-            'box_17_amt_items' => 'nullable|string',
-            'box_18_tax_exempt_income' => 'nullable|string',
-            'box_19_distributions' => 'nullable|string',
-            'box_20_other_info' => 'nullable|string',
-            'box_21_foreign_taxes_paid' => 'nullable|string',
-            'box_22_more_info' => 'nullable|string',
-            'notes' => 'nullable|string',
-        ]);
-
-        $form->update($validated);
+        if (!$form) {
+            return response()->json($this->emptyK1FormPayload($interest, $taxYear));
+        }
 
         return response()->json($form);
     }
@@ -248,11 +104,15 @@ class K1FormController extends Controller
     /**
      * Remove the specified K-1 form.
      */
-    public function destroy(K1Form $form): JsonResponse
+    public function destroy(OwnershipInterest $interest, int $taxYear): JsonResponse
     {
-        $form->load(['ownershipInterest.ownedCompany']);
-        $company = $form->ownershipInterest->ownedCompany;
+        $company = $interest->ownedCompany;
         Gate::authorize('access-company', $company);
+
+        $form = $interest->k1FormForYear($taxYear);
+        if (!$form) {
+            abort(404);
+        }
 
         $form->delete();
 
@@ -262,11 +122,20 @@ class K1FormController extends Controller
     /**
      * Upload a K-1 form PDF.
      */
-    public function uploadForm(Request $request, K1Form $form): JsonResponse
+    public function uploadForm(Request $request, OwnershipInterest $interest, int $taxYear): JsonResponse
     {
-        $form->load(['ownershipInterest.ownedCompany']);
-        $company = $form->ownershipInterest->ownedCompany;
+        $company = $interest->ownedCompany;
         Gate::authorize('access-company', $company);
+
+        $form = $interest->k1FormForYear($taxYear);
+        if (!$form) {
+            $form = K1Form::create([
+                'ownership_interest_id' => $interest->id,
+                'tax_year' => $taxYear,
+                'partnership_tax_year_begin' => $taxYear . '-01-01',
+                'partnership_tax_year_end' => $taxYear . '-12-31',
+            ]);
+        }
 
         $request->validate([
             'file' => 'required|file|mimes:pdf|max:10240',
@@ -295,11 +164,20 @@ class K1FormController extends Controller
     /**
      * Extract K-1 data from an uploaded PDF using Gemini API.
      */
-    public function extractFromPdf(Request $request, K1Form $form): JsonResponse
+    public function extractFromPdf(Request $request, OwnershipInterest $interest, int $taxYear): JsonResponse
     {
-        $form->load(['ownershipInterest.ownedCompany']);
-        $company = $form->ownershipInterest->ownedCompany;
+        $company = $interest->ownedCompany;
         Gate::authorize('access-company', $company);
+
+        $form = $interest->k1FormForYear($taxYear);
+        if (!$form) {
+            $form = K1Form::create([
+                'ownership_interest_id' => $interest->id,
+                'tax_year' => $taxYear,
+                'partnership_tax_year_begin' => $taxYear . '-01-01',
+                'partnership_tax_year_end' => $taxYear . '-12-31',
+            ]);
+        }
 
         $request->validate([
             'pdf' => 'required|file|mimes:pdf|max:10240',
@@ -475,5 +353,102 @@ PROMPT;
                 'error' => 'Failed to process PDF: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function k1ValidationRules(bool $requireTaxYear): array
+    {
+        return [
+            'tax_year' => $requireTaxYear ? 'required|integer|min:1900|max:2100' : 'sometimes|required|integer|min:1900|max:2100',
+            'partnership_name' => 'nullable|string|max:255',
+            'partnership_address' => 'nullable|string|max:500',
+            'partnership_ein' => 'nullable|string|max:20',
+            'partnership_tax_year_begin' => 'nullable|date',
+            'partnership_tax_year_end' => 'nullable|date',
+            'irs_center' => 'nullable|string|max:100',
+            'is_publicly_traded' => 'nullable|boolean',
+            'partner_ssn_ein' => 'nullable|string|max:20',
+            'partner_name' => 'nullable|string|max:255',
+            'partner_address' => 'nullable|string|max:500',
+            'is_general_partner' => 'nullable|boolean',
+            'is_limited_partner' => 'nullable|boolean',
+            'is_domestic_partner' => 'nullable|boolean',
+            'is_foreign_partner' => 'nullable|boolean',
+            'is_disregarded_entity' => 'nullable|boolean',
+            'entity_type_code' => 'nullable|string|max:10',
+            'is_retirement_plan' => 'nullable|boolean',
+            'share_of_profit_beginning' => 'nullable|numeric|min:0|max:100',
+            'share_of_profit_ending' => 'nullable|numeric|min:0|max:100',
+            'share_of_loss_beginning' => 'nullable|numeric|min:0|max:100',
+            'share_of_loss_ending' => 'nullable|numeric|min:0|max:100',
+            'share_of_capital_beginning' => 'nullable|numeric|min:0|max:100',
+            'share_of_capital_ending' => 'nullable|numeric|min:0|max:100',
+            'nonrecourse_liabilities' => 'nullable|numeric',
+            'qualified_nonrecourse_financing' => 'nullable|numeric',
+            'recourse_liabilities' => 'nullable|numeric',
+            'total_liabilities' => 'nullable|numeric',
+            'beginning_capital_account' => 'nullable|numeric',
+            'capital_contributed' => 'nullable|numeric',
+            'current_year_income_loss' => 'nullable|numeric',
+            'withdrawals_distributions' => 'nullable|numeric',
+            'other_increase_decrease' => 'nullable|numeric',
+            'ending_capital_account' => 'nullable|numeric',
+            'capital_account_tax_basis' => 'nullable|boolean',
+            'capital_account_gaap' => 'nullable|boolean',
+            'capital_account_section_704b' => 'nullable|boolean',
+            'capital_account_other' => 'nullable|boolean',
+            'capital_account_other_description' => 'nullable|string|max:255',
+            'box_1_ordinary_income' => 'nullable|numeric',
+            'box_2_net_rental_real_estate' => 'nullable|numeric',
+            'box_3_other_net_rental' => 'nullable|numeric',
+            'box_4a_guaranteed_payments_services' => 'nullable|numeric',
+            'box_4b_guaranteed_payments_capital' => 'nullable|numeric',
+            'box_4c_guaranteed_payments_total' => 'nullable|numeric',
+            'box_5_interest_income' => 'nullable|numeric',
+            'box_6a_ordinary_dividends' => 'nullable|numeric',
+            'box_6b_qualified_dividends' => 'nullable|numeric',
+            'box_6c_dividend_equivalents' => 'nullable|numeric',
+            'box_7_royalties' => 'nullable|numeric',
+            'box_8_net_short_term_capital_gain' => 'nullable|numeric',
+            'box_9a_net_long_term_capital_gain' => 'nullable|numeric',
+            'box_9b_collectibles_gain' => 'nullable|numeric',
+            'box_9c_unrecaptured_1250_gain' => 'nullable|numeric',
+            'box_10_net_section_1231_gain' => 'nullable|numeric',
+            'box_11_other_income' => 'nullable|string',
+            'box_12_section_179_deduction' => 'nullable|numeric',
+            'box_13_other_deductions' => 'nullable|string',
+            'box_14_self_employment_earnings' => 'nullable|numeric',
+            'box_15_credits' => 'nullable|string',
+            'box_16_foreign_transactions' => 'nullable|string',
+            'box_17_amt_items' => 'nullable|string',
+            'box_18_tax_exempt_income' => 'nullable|string',
+            'box_19_distributions' => 'nullable|string',
+            'box_20_other_info' => 'nullable|string',
+            'box_21_foreign_taxes_paid' => 'nullable|string',
+            'box_22_more_info' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ];
+    }
+
+    private function isTaxYearOutOfBounds(OwnershipInterest $interest, int $taxYear): bool
+    {
+        $currentYear = (int) now()->format('Y');
+        $startYear = $interest->inception_basis_year
+            ?? ($interest->effective_from ? (int) $interest->effective_from->format('Y') : $currentYear);
+        $endYear = $interest->effective_to
+            ? (int) $interest->effective_to->format('Y')
+            : $currentYear;
+
+        return $taxYear < $startYear || $taxYear > $endYear;
+    }
+
+    private function emptyK1FormPayload(OwnershipInterest $interest, int $taxYear): array
+    {
+        $payload = array_fill_keys((new K1Form())->getFillable(), null);
+        $payload['id'] = null;
+        $payload['ownership_interest_id'] = $interest->id;
+        $payload['tax_year'] = $taxYear;
+        $payload['income_sources'] = [];
+
+        return $payload;
     }
 }

@@ -47,26 +47,16 @@ Route::middleware(['auth'])->group(function () {
 Route::prefix('ownership-interests/{interest}')->group(function () {
     Route::get('k1s', [K1FormController::class, 'index']);
     Route::post('k1s', [K1FormController::class, 'store']);
-    // Retrieve by year or ID? 
-    // Standard ID retrieval is often easier for edit pages if we have the ID. 
-    // But we might want retrieval by year.
-    // Let's keep ID retrieval at top level or nested?
-    // The previous code had `forms/{form}` separate.
-});
-
-// K-1 Form operations requiring specific form context
-Route::prefix('forms/{form}')->group(function () {
-    Route::get('/', [K1FormController::class, 'show']);
-    Route::put('/', [K1FormController::class, 'update']);
-    Route::delete('/', [K1FormController::class, 'destroy']);
-    Route::post('upload', [K1FormController::class, 'uploadForm']);
-    Route::post('extract-pdf', [K1FormController::class, 'extractFromPdf']);
+    Route::get('k1s/{taxYear}', [K1FormController::class, 'show'])->whereNumber('taxYear');
+    Route::delete('k1s/{taxYear}', [K1FormController::class, 'destroy'])->whereNumber('taxYear');
+    Route::post('k1s/{taxYear}/upload', [K1FormController::class, 'uploadForm'])->whereNumber('taxYear');
+    Route::post('k1s/{taxYear}/extract-pdf', [K1FormController::class, 'extractFromPdf'])->whereNumber('taxYear');
 
     // Income Sources
-    Route::get('income-sources', [K1IncomeSourceController::class, 'index']);
-    Route::post('income-sources', [K1IncomeSourceController::class, 'store']);
-    Route::put('income-sources/{source}', [K1IncomeSourceController::class, 'update']);
-    Route::delete('income-sources/{source}', [K1IncomeSourceController::class, 'destroy']);
+    Route::get('k1s/{taxYear}/income-sources', [K1IncomeSourceController::class, 'index'])->whereNumber('taxYear');
+    Route::post('k1s/{taxYear}/income-sources', [K1IncomeSourceController::class, 'store'])->whereNumber('taxYear');
+    Route::put('k1s/{taxYear}/income-sources/{source}', [K1IncomeSourceController::class, 'update'])->whereNumber('taxYear');
+    Route::delete('k1s/{taxYear}/income-sources/{source}', [K1IncomeSourceController::class, 'destroy'])->whereNumber('taxYear');
 });
 
 // Ownership interests for this company (where this company is the owner)

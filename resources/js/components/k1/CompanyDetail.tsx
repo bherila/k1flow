@@ -1,4 +1,4 @@
-import { ArrowRight,Building2, ChevronLeft, ChevronRight, FileText, Plus, Search, Star, Trash2, Users } from 'lucide-react';
+import { ArrowRight,Building2, ChevronLeft, ChevronRight, FileText, Search, Star, Trash2, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo,useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -92,27 +92,6 @@ export default function CompanyDetail({ companyId }: Props) {
       setOwnershipInterests(interests);
     } catch (error) {
       console.error('Failed to delete ownership interest:', error);
-    }
-  };
-
-  const handleK1Click = async (interest: OwnershipInterest, year: number) => {
-    // Check if K1 exists
-    const existingForm = interest.k1_forms?.find(f => f.tax_year === year);
-    
-    if (existingForm) {
-      // Navigate to existing form
-      window.location.href = `/ownership/${interest.id}/k1/${existingForm.id}`;
-    } else {
-      // Create new K1
-      try {
-        const newForm = await fetchWrapper.post(`/api/ownership-interests/${interest.id}/k1s`, {
-          tax_year: year
-        });
-        window.location.href = `/ownership/${interest.id}/k1/${newForm.id}`;
-      } catch (error) {
-        console.error('Failed to create K1 form:', error);
-        alert('Failed to create K1 form. Please try again.');
-      }
     }
   };
 
@@ -397,22 +376,15 @@ export default function CompanyDetail({ companyId }: Props) {
                                 <TableCell>
                                   <div className="flex items-center gap-2">
                                     <Button
+                                      asChild
                                       variant="secondary"
                                       size="sm"
-                                      onClick={() => handleK1Click(interest, year)}
                                       className="whitespace-nowrap"
                                     >
-                                      {hasK1 ? (
-                                        <>
-                                          <FileText className="h-4 w-4 mr-2" />
-                                          View K-1
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Plus className="h-4 w-4 mr-2" />
-                                          Add K-1
-                                        </>
-                                      )}
+                                      <a href={`/ownership/${interest.id}/k1/${year}`}>
+                                        <FileText className="h-4 w-4 mr-2" />
+                                        {hasK1 ? 'View K-1' : 'Edit K-1'}
+                                      </a>
                                     </Button>
                                     <a 
                                       href={`/ownership/${interest.id}/k1-streamlined`}
@@ -528,22 +500,15 @@ export default function CompanyDetail({ companyId }: Props) {
                                  <TableCell>
                                    <div className="flex items-center gap-2">
                                      <Button
+                                       asChild
                                        variant="secondary"
                                        size="sm"
-                                       onClick={() => handleK1Click(interest, year)}
                                        className="whitespace-nowrap"
                                      >
-                                       {k1 ? (
-                                         <>
-                                           <FileText className="h-4 w-4 mr-2" />
-                                           View K-1
-                                         </>
-                                       ) : (
-                                         <>
-                                           <Plus className="h-4 w-4 mr-2" />
-                                           Add K-1
-                                         </>
-                                       )}
+                                       <a href={`/ownership/${interest.id}/k1/${year}`}>
+                                         <FileText className="h-4 w-4 mr-2" />
+                                         {k1 ? 'View K-1' : 'Edit K-1'}
+                                       </a>
                                      </Button>
                                      <a 
                                        href={`/ownership/${interest.id}/k1-streamlined`}

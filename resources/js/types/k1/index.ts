@@ -17,7 +17,7 @@ export interface K1Company {
 
 // K1 Form (Schedule K-1)
 export interface K1Form {
-  id: number;
+  id?: number | null;
   ownership_interest_id: number;
   tax_year: number;
   form_file_path: string | null;
