@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 
-import UserFormFields, { UserFormData } from '@/components/user-management/UserFormFields'
+import UserFormFields, { type UserFormData } from '@/components/user-management/UserFormFields'
 
 describe('UserFormFields', () => {
   it('renders values and calls setFormData on input change', () => {

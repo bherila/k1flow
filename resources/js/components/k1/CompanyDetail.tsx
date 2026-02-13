@@ -1,5 +1,5 @@
 import { ArrowRight,Building2, ChevronLeft, ChevronRight, FileText, Plus, Search, Star, Trash2, Users } from 'lucide-react';
-import { useCallback, useEffect, useMemo,useState } from 'react';
+import React, { useCallback, useEffect, useMemo,useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -264,234 +264,245 @@ export default function CompanyDetail({ companyId }: Props) {
         </TabsList>
 
         <TabsContent value="year" className="space-y-6">
-          {(() => {
-            const currentYear = new Date().getFullYear();
-            return groupedByYear.map(({ year, interests }) => (
-              <Card key={year}>
-                <CardHeader className="py-4">
-                  <CardTitle className="text-lg font-medium">Tax Year {year}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Ownership Interest (Entity)</TableHead>
-                        <TableHead className="text-right">Ownership %</TableHead>
-                        <TableHead>K-1 Status</TableHead>
-                        <TableHead className="text-right">Ending Basis</TableHead>
-                        <TableHead className="w-[250px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {interests.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground">
-                            No active ownership interests for this year.
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ownership Interest (Entity)</TableHead>
+                    <TableHead className="text-right">Ownership %</TableHead>
+                    <TableHead>K-1 Status</TableHead>
+                    <TableHead className="text-right">Ending Basis</TableHead>
+                    <TableHead className="w-[250px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {groupedByYear.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No ownership interests found. Add one to see years.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    groupedByYear.map(({ year, interests }) => (
+                      <React.Fragment key={year}>
+                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                          <TableCell colSpan={5} className="font-bold text-sm py-2">
+                            Tax Year {year}
                           </TableCell>
                         </TableRow>
-                      ) : (
-                        interests.map((interest) => {
-                          const hasK1 = interest.k1_forms?.some(f => f.tax_year === year);
-                          const endingBasis = getEndingBasis(interest.id, year);
-                          const isInception = isInceptionYear(interest, year);
-                          return (
-                            <TableRow key={interest.id}>
-                              <TableCell className="font-medium">
-                                <div className="flex items-center gap-2">
-                                  {interest.owned_company?.name || 'Unknown Entity'}
-                                  {isInception && (
-                                    <span title="Inception year">
-                                      <Star 
-                                        className="h-4 w-4 text-yellow-500 fill-yellow-500" 
-                                      />
-                                    </span>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right font-mono">
-                                {formatPercentage(interest.ownership_percentage)}
-                              </TableCell>
-                              <TableCell>
-                                {getK1StatusBadge(interest, year)}
-                              </TableCell>
-                              <TableCell className="text-right font-mono">
-                                {endingBasis !== null ? formatCurrency(endingBasis) : '—'}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => handleK1Click(interest, year)}
-                                  >
-                                    {hasK1 ? (
-                                      <>
-                                        <FileText className="h-4 w-4 mr-2" />
-                                        View K-1
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Add K-1
-                                      </>
+                        {interests.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
+                              No active ownership interests for this year.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          interests.map((interest) => {
+                            const hasK1 = interest.k1_forms?.some(f => f.tax_year === year);
+                            const endingBasis = getEndingBasis(interest.id, year);
+                            const isInception = isInceptionYear(interest, year);
+                            return (
+                              <TableRow key={interest.id}>
+                                <TableCell className="font-medium">
+                                  <div className="flex items-center gap-2">
+                                    {interest.owned_company?.name || 'Unknown Entity'}
+                                    {isInception && (
+                                      <span title="Inception year">
+                                        <Star 
+                                          className="h-4 w-4 text-yellow-500 fill-yellow-500" 
+                                        />
+                                      </span>
                                     )}
-                                  </Button>
-                                  <a 
-                                    href={`/ownership/${interest.id}/k1-streamlined`}
-                                    className="text-sm text-primary hover:underline flex items-center gap-1"
-                                  >
-                                    <ArrowRight className="h-4 w-4" />
-                                    Multi-Year
-                                  </a>
-                                  <a 
-                                    href={`/ownership/${interest.id}`}
-                                    className="text-sm text-primary hover:underline flex items-center gap-1"
-                                  >
-                                    <Search className="h-4 w-4" />
-                                    Basis Tracker
-                                  </a>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            ));
-          })()}
-          {groupedByYear.length === 0 && (
-             <div className="text-center py-8 text-muted-foreground">
-               No ownership interests found. Add one to see years.
-             </div>
-          )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {formatPercentage(interest.ownership_percentage)}
+                                </TableCell>
+                                <TableCell>
+                                  {getK1StatusBadge(interest, year)}
+                                </TableCell>
+                                <TableCell className="text-right font-mono">
+                                  {endingBasis !== null ? formatCurrency(endingBasis) : '—'}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => handleK1Click(interest, year)}
+                                      className="whitespace-nowrap"
+                                    >
+                                      {hasK1 ? (
+                                        <>
+                                          <FileText className="h-4 w-4 mr-2" />
+                                          View K-1
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Plus className="h-4 w-4 mr-2" />
+                                          Add K-1
+                                        </>
+                                      )}
+                                    </Button>
+                                    <a 
+                                      href={`/ownership/${interest.id}/k1-streamlined`}
+                                      className="text-sm text-primary hover:underline flex items-center gap-1 whitespace-nowrap"
+                                    >
+                                      <ArrowRight className="h-4 w-4" />
+                                      Multi-Year
+                                    </a>
+                                    <a 
+                                      href={`/ownership/${interest.id}`}
+                                      className="text-sm text-primary hover:underline flex items-center gap-1 whitespace-nowrap"
+                                    >
+                                      <Search className="h-4 w-4" />
+                                      Basis Tracker
+                                    </a>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </React.Fragment>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="interest" className="space-y-6">
-          {ownershipInterests.map((interest) => {
-             const startYear = interest.inception_basis_year || 
-                              (interest.effective_from ? new Date(interest.effective_from).getFullYear() : 2020);
-             const currentYear = new Date().getFullYear();
-             const interestYears = [];
-             for (let y = currentYear; y >= startYear; y--) {
-               interestYears.push(y);
-             }
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tax Year</TableHead>
+                    <TableHead className="text-right">Ownership %</TableHead>
+                    <TableHead>K-1 Status</TableHead>
+                    <TableHead className="text-right">Ending Basis</TableHead>
+                    <TableHead className="w-[250px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ownershipInterests.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No ownership interests found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    ownershipInterests.map((interest) => {
+                      const startYear = interest.inception_basis_year || 
+                                        (interest.effective_from ? new Date(interest.effective_from).getFullYear() : 2020);
+                      const currentYear = new Date().getFullYear();
+                      const interestYears = [];
+                      for (let y = currentYear; y >= startYear; y--) {
+                        interestYears.push(y);
+                      }
 
-             return (
-              <Card key={interest.id}>
-                <CardHeader className="py-4 flex flex-row items-center justify-between space-y-0">
-                  <div className="flex items-center gap-3">
-                    <Building2 className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <CardTitle className="text-lg font-medium">
-                        {interest.owned_company?.name || 'Unknown Entity'}
-                      </CardTitle>
-                      <CardDescription>
-                        {formatPercentage(interest.ownership_percentage)} Ownership
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteOwnership(interest.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tax Year</TableHead>
-                        <TableHead className="text-right">Ownership %</TableHead>
-                        <TableHead>K-1 Status</TableHead>
-                        <TableHead className="text-right">Ending Basis</TableHead>
-                        <TableHead className="w-[250px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {interestYears.map(year => {
-                         const k1 = interest.k1_forms?.find(f => f.tax_year === year);
-                         const endingBasis = getEndingBasis(interest.id, year);
-                         const isInception = isInceptionYear(interest, year);
-                         return (
-                           <TableRow key={year}>
-                             <TableCell className="font-medium">
-                               <div className="flex items-center gap-2">
-                                 {year}
-                                 {isInception && (
-                                   <span title="Inception year">
-                                     <Star 
-                                       className="h-4 w-4 text-yellow-500 fill-yellow-500" 
-                                     />
-                                   </span>
-                                 )}
-                               </div>
-                             </TableCell>
-                             <TableCell className="text-right font-mono">
-                               {formatPercentage(interest.ownership_percentage)}
-                             </TableCell>
-                             <TableCell>
-                               {getK1StatusBadge(interest, year)}
-                             </TableCell>
-                             <TableCell className="text-right font-mono">
-                               {endingBasis !== null ? formatCurrency(endingBasis) : '—'}
-                             </TableCell>
-                             <TableCell>
-                               <div className="flex items-center gap-2">
-                                 <Button
-                                   variant="secondary"
-                                   size="sm"
-                                   onClick={() => handleK1Click(interest, year)}
-                                 >
-                                   {k1 ? (
-                                     <>
-                                       <FileText className="h-4 w-4 mr-2" />
-                                       View K-1
-                                     </>
-                                   ) : (
-                                     <>
-                                       <Plus className="h-4 w-4 mr-2" />
-                                       Add K-1
-                                     </>
-                                   )}
-                                 </Button>
-                                 <a 
-                                   href={`/ownership/${interest.id}/k1-streamlined`}
-                                   className="text-sm text-primary hover:underline flex items-center gap-1"
-                                 >
-                                   <ArrowRight className="h-4 w-4" />
-                                   Multi-Year
-                                 </a>
-                                 <a 
-                                   href={`/ownership/${interest.id}`}
-                                   className="text-sm text-primary hover:underline flex items-center gap-1"
-                                 >
-                                   <Search className="h-4 w-4" />
-                                   Basis Tracker
-                                 </a>
-                               </div>
-                             </TableCell>
-                           </TableRow>
-                         );
-                      })}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            );
-          })}
-          {ownershipInterests.length === 0 && (
-             <div className="text-center py-8 text-muted-foreground">
-               No ownership interests found.
-             </div>
-          )}
+                      return (
+                        <React.Fragment key={interest.id}>
+                          <TableRow className="bg-muted/50 hover:bg-muted/50">
+                            <TableCell colSpan={5} className="py-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                                  <span className="font-bold text-sm">
+                                    {interest.owned_company?.name || 'Unknown Entity'}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground font-normal">
+                                    ({formatPercentage(interest.ownership_percentage)} Ownership)
+                                  </span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteOwnership(interest.id)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                          {interestYears.map(year => {
+                             const k1 = interest.k1_forms?.find(f => f.tax_year === year);
+                             const endingBasis = getEndingBasis(interest.id, year);
+                             const isInception = isInceptionYear(interest, year);
+                             return (
+                               <TableRow key={year}>
+                                 <TableCell className="font-medium">
+                                   <div className="flex items-center gap-2">
+                                     {year}
+                                     {isInception && (
+                                       <span title="Inception year">
+                                         <Star 
+                                           className="h-4 w-4 text-yellow-500 fill-yellow-500" 
+                                         />
+                                       </span>
+                                     )}
+                                   </div>
+                                 </TableCell>
+                                 <TableCell className="text-right font-mono">
+                                   {formatPercentage(interest.ownership_percentage)}
+                                 </TableCell>
+                                 <TableCell>
+                                   {getK1StatusBadge(interest, year)}
+                                 </TableCell>
+                                 <TableCell className="text-right font-mono">
+                                   {endingBasis !== null ? formatCurrency(endingBasis) : '—'}
+                                 </TableCell>
+                                 <TableCell>
+                                   <div className="flex items-center gap-2">
+                                     <Button
+                                       variant="secondary"
+                                       size="sm"
+                                       onClick={() => handleK1Click(interest, year)}
+                                       className="whitespace-nowrap"
+                                     >
+                                       {k1 ? (
+                                         <>
+                                           <FileText className="h-4 w-4 mr-2" />
+                                           View K-1
+                                         </>
+                                       ) : (
+                                         <>
+                                           <Plus className="h-4 w-4 mr-2" />
+                                           Add K-1
+                                         </>
+                                       )}
+                                     </Button>
+                                     <a 
+                                       href={`/ownership/${interest.id}/k1-streamlined`}
+                                       className="text-sm text-primary hover:underline flex items-center gap-1 whitespace-nowrap"
+                                     >
+                                       <ArrowRight className="h-4 w-4" />
+                                       Multi-Year
+                                     </a>
+                                     <a 
+                                       href={`/ownership/${interest.id}`}
+                                       className="text-sm text-primary hover:underline flex items-center gap-1 whitespace-nowrap"
+                                     >
+                                       <Search className="h-4 w-4" />
+                                       Basis Tracker
+                                     </a>
+                                   </div>
+                                 </TableCell>
+                               </TableRow>
+                             );
+                          })}
+                        </React.Fragment>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
