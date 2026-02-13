@@ -88,31 +88,23 @@ const K1_FIELDS: { [section: string]: K1FieldMeta[] } = {
     { key: 'box_9b_collectibles_gain', label: 'Box 9b - Collectibles (28%) Gain (Loss)', type: 'money' },
     { key: 'box_9c_unrecaptured_1250_gain', label: 'Box 9c - Unrecaptured Section 1250 Gain', type: 'money' },
     { key: 'box_10_net_section_1231_gain', label: 'Box 10 - Net Section 1231 Gain (Loss)', type: 'money' },
-    { key: 'box_11_other_income', label: 'Box 11 - Other Income (Loss)', type: 'textarea' },
+    { key: 'box_11_other_income', label: 'Box 11 - Other Income (Loss)', type: 'money' },
     { key: 'box_12_section_179_deduction', label: 'Box 12 - Section 179 Deduction', type: 'money' },
-    { key: 'box_13_other_deductions', label: 'Box 13 - Other Deductions', type: 'textarea' },
+    { key: 'box_13_other_deductions', label: 'Box 13 - Other Deductions', type: 'money' },
     { key: 'box_14_self_employment_earnings', label: 'Box 14 - Self-Employment Earnings', type: 'money' },
-    { key: 'box_15_credits', label: 'Box 15 - Credits', type: 'textarea' },
-    { key: 'box_16_foreign_transactions', label: 'Box 16 - Foreign Transactions', type: 'textarea' },
-    { key: 'box_17_amt_items', label: 'Box 17 - Alternative Minimum Tax (AMT) Items', type: 'textarea' },
-    { key: 'box_18_tax_exempt_income', label: 'Box 18 - Tax-Exempt Income', type: 'textarea' },
-    { key: 'box_19_distributions', label: 'Box 19 - Distributions', type: 'textarea' },
-    { key: 'box_20_other_info', label: 'Box 20 - Other Information', type: 'textarea' },
-    { key: 'box_21_foreign_taxes_paid', label: 'Box 21 - Foreign Taxes Paid', type: 'textarea' },
-    { key: 'box_22_more_info', label: 'Box 22 - More Information', type: 'textarea' },
+    { key: 'box_15_credits', label: 'Box 15 - Credits', type: 'money' },
+    { key: 'box_16_foreign_transactions', label: 'Box 16 - Foreign Transactions', type: 'money' },
+    { key: 'box_17_amt_items', label: 'Box 17 - Alternative Minimum Tax (AMT) Items', type: 'money' },
+    { key: 'box_18_tax_exempt_income', label: 'Box 18 - Tax-Exempt Income', type: 'money' },
+    { key: 'box_19_distributions', label: 'Box 19 - Distributions', type: 'money' },
+    { key: 'box_20_other_info', label: 'Box 20 - Other Information', type: 'money' },
+    { key: 'box_21_foreign_taxes_paid', label: 'Box 21 - Foreign Taxes Paid', type: 'money' },
+    { key: 'box_22_more_info', label: 'Box 22 - More Information', type: 'money' },
   ],
   'Notes': [
     { key: 'notes', label: 'Notes', type: 'textarea' },
   ],
 };
-
-/** Check if a tax year date matches the default (Jan 1 or Dec 31). */
-function isDefaultTaxYearDate(value: string | null | undefined, year: number, isBegin: boolean): boolean {
-  if (!value) return true;
-  const dateStr = typeof value === 'string' ? value.substring(0, 10) : '';
-  const defaultDate = isBegin ? `${year}-01-01` : `${year}-12-31`;
-  return dateStr === defaultDate || dateStr === '';
-}
 
 export default function K1FormStreamlined({ interestId }: Props) {
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
@@ -510,6 +502,12 @@ const K1Cell = React.memo(function K1Cell({
   const [localValue, setLocalValue] = useState(initialValue);
   const initialValueRef = useRef(initialValue);
 
+  // Synchronize local state if initialValue changes from parent (e.g. after load)
+  useEffect(() => {
+    setLocalValue(initialValue);
+    initialValueRef.current = initialValue;
+  }, [initialValue]);
+
   // Track whether the value has been modified since focus
   const handleBlur = useCallback(() => {
     // Only save if value actually changed from the initial value loaded
@@ -572,16 +570,11 @@ const K1Cell = React.memo(function K1Cell({
     ? ((localValue as string)?.substring(0, 10) ?? '')
     : ((localValue as string | number) ?? '');
 
-  // For tax year dates, hide value if it matches the default
-  const effectiveValue = (field.key === 'partnership_tax_year_begin' || field.key === 'partnership_tax_year_end')
-    ? (isDefaultTaxYearDate(localValue as string, year, field.key === 'partnership_tax_year_begin') ? '' : displayValue)
-    : displayValue;
-
   return (
     <Input
       type={inputType}
       step={step}
-      value={effectiveValue}
+      value={displayValue}
       readOnly={readOnly}
       placeholder={placeholder}
       onChange={(e) => setLocalValue(e.target.value || null)}
