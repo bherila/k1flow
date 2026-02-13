@@ -82,8 +82,8 @@ export default function UserActionsModal({
   }
 
   const handleSetPassword = async () => {
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters')
+    if (newPassword.length === 0) {
+      setError('Password cannot be empty')
       return
     }
 

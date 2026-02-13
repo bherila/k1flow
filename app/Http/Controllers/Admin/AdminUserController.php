@@ -64,7 +64,7 @@ class AdminUserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'nullable|string|min:8',
+            'password' => 'nullable|string',
             'is_admin' => 'boolean',
             'is_disabled' => 'boolean',
             'force_change_pw' => 'boolean',
@@ -103,7 +103,7 @@ class AdminUserController extends Controller
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'email' => ['sometimes', 'required', 'email', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:8',
+            'password' => 'nullable|string',
             'is_admin' => 'boolean',
             'is_disabled' => 'boolean',
             'force_change_pw' => 'boolean',
