@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, FileUp, Loader2,Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileUp, Loader2 } from 'lucide-react';
 import type { ChangeEvent } from 'react';
 import { useCallback,useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -82,28 +82,6 @@ export default function K1FormDetail({ interestId, taxYear }: Props) {
     formDataRef.current = { ...formDataRef.current, [field]: value };
     pendingChangesRef.current.add(field);
   }, []);
-
-  // Full save for manual trigger
-  const handleSave = async () => {
-    setSaving(true);
-    const toastId = toast.loading('Saving K-1 form...');
-    try {
-      const updated = await fetchWrapper.post(`/api/ownership-interests/${interestId}/k1s`, {
-        ...formDataRef.current,
-        tax_year: taxYear,
-      });
-      setForm(updated);
-      formDataRef.current = { ...updated };
-      pendingChangesRef.current.clear();
-      toast.success('K-1 form saved successfully', { id: toastId });
-    } catch (error) {
-      console.error('Failed to save:', error);
-      const message = error instanceof Error ? error.message : 'An unknown error occurred while saving.';
-      toast.error(`Failed to save: ${message}`, { id: toastId });
-    } finally {
-      setSaving(false);
-    }
-  };
 
   // PDF upload handler
   const handlePdfUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -205,17 +183,21 @@ export default function K1FormDetail({ interestId, taxYear }: Props) {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
+            size="sm"
             onClick={() => window.location.href = `/ownership/${interestId}/k1-streamlined`}
           >
-            Open Full View
+            Multi-Year View
           </Button>
-          <Button variant="outline" onClick={() => setUploadModalOpen(true)}>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.location.href = `/ownership/${interestId}/basis/${taxYear}/adjustments`}
+          >
+            Basis Adjustments
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setUploadModalOpen(true)}>
             <FileUp className="mr-2 h-4 w-4" />
             Import K-1 PDF
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? 'Saving...' : 'Save All'}
           </Button>
         </div>
       </div>

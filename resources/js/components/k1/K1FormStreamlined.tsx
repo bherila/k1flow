@@ -327,6 +327,15 @@ export default function K1FormStreamlined({ interestId }: Props) {
             {companyName} - All Years
           </p>
         </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.location.href = `/ownership/${interestId}`}
+          >
+            Basis Tracker
+          </Button>
+        </div>
       </div>
 
       {/* Error alert — shown when save fails, page becomes readonly */}

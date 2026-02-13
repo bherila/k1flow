@@ -194,19 +194,37 @@ export default function OwnershipBasisDetail({ interestId, year }: Props) {
       />
 
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {year} Basis Adjustments
-        </h1>
-        {interest && (
-          <p className="text-muted-foreground mt-1">
-            {interest.owner_company?.name} interest in {interest.owned_company?.name}
-          </p>
-        )}
-        <div className="mt-2 h-6">
-          {saveStatus === 'saving' && <span className="text-sm text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving...</span>}
-          {saveStatus === 'saved' && <span className="text-sm text-green-600">✓ Saved</span>}
-          {saveStatus === 'error' && <span className="text-sm text-red-600">Failed to save</span>}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {year} Basis Adjustments
+          </h1>
+          {interest && (
+            <p className="text-muted-foreground mt-1">
+              {interest.owner_company?.name} interest in {interest.owned_company?.name}
+            </p>
+          )}
+          <div className="mt-2 h-6">
+            {saveStatus === 'saving' && <span className="text-sm text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving...</span>}
+            {saveStatus === 'saved' && <span className="text-sm text-green-600">✓ Saved</span>}
+            {saveStatus === 'error' && <span className="text-sm text-red-600">Failed to save</span>}
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.location.href = `/ownership/${interestId}/k1/${year}`}
+          >
+            Single-Year K-1
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.location.href = `/ownership/${interestId}/k1-streamlined`}
+          >
+            Multi-Year View
+          </Button>
         </div>
       </div>
 
