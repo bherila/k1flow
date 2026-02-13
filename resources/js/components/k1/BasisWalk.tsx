@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback,useEffect, useRef, useState } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchWrapper } from '@/fetchWrapper';
@@ -58,6 +58,7 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
   
   // Cache adjustments for hover display
   const [yearlyAdjustments, setYearlyAdjustments] = useState<YearlyAdjustments>({});
+  const loadingYearsRef = useRef<Set<number>>(new Set());
 
   // Load the full basis walk
   const loadBasisWalk = useCallback(async () => {
@@ -78,7 +79,9 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
 
   // Load detail for a specific year (for hover preview)
   const loadYearAdjustments = useCallback(async (year: number) => {
-    if (yearlyAdjustments[year]) return; // Already cached
+    if (loadingYearsRef.current.has(year)) return;
+    
+    loadingYearsRef.current.add(year);
     
     try {
       const data = await fetchWrapper.get(`/api/ownership-interests/${interestId}/basis/${year}`);
@@ -92,8 +95,10 @@ export default function BasisWalk({ interestId, inceptionYear, inceptionBasis, o
       }));
     } catch (error) {
       console.error('Failed to load year adjustments:', error);
+      // Remove from ref so we can try again if it failed
+      loadingYearsRef.current.delete(year);
     }
-  }, [interestId, yearlyAdjustments]);
+  }, [interestId]);
 
   if (loading) {
     return (

@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo,useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -202,8 +203,37 @@ export default function CompanyDetail({ companyId }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+      <div className="max-w-7xl mx-auto space-y-6 py-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-56" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-28 rounded" />
+            <Skeleton className="h-10 w-36 rounded" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-[#1C1C1A] rounded-lg shadow border border-gray-200 dark:border-[#3E3E3A] p-6">
+            <Skeleton className="h-6 w-40 mb-4" />
+            <div className="space-y-4">
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+              <Skeleton className="h-10" />
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-[#1C1C1A] rounded-lg shadow border border-gray-200 dark:border-[#3E3E3A] p-6">
+            <Skeleton className="h-6 w-36 mb-4" />
+            <div className="space-y-3">
+              <Skeleton className="h-8" />
+              <Skeleton className="h-8" />
+              <Skeleton className="h-8" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -264,7 +294,7 @@ export default function CompanyDetail({ companyId }: Props) {
         </TabsList>
 
         <TabsContent value="year" className="space-y-6">
-          <Card>
+          <Card className="bg-primary/5 border-primary/20">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -507,12 +537,12 @@ export default function CompanyDetail({ companyId }: Props) {
       </Tabs>
 
       {/* Owned By Section (Secondary) */}
-      <div className="mt-12 pt-8 border-t">
+      <div className="mt-12 pt-8">
          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Users className="h-5 w-5" />
             Shareholders / Owners of {company.name}
          </h3>
-         <Card>
+         <Card className="bg-primary/5 border-primary/20">
            <CardContent className="p-0">
              <Table>
                 <TableHeader>
