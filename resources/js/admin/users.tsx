@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 
 import { Button } from '@/components/ui/button';
 import { fetchWrapper } from '@/fetchWrapper';
+import { Skeleton } from '@/components/ui/skeleton';
+import CreateUserModal from '@/components/user-management/CreateUserModal';
 
 type User = {
   id: number;
@@ -27,6 +29,7 @@ function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -54,11 +57,38 @@ function AdminUsers() {
     <div className='max-w-7xl mx-auto'>
       <div className='flex items-center justify-between mb-8'>
         <h1 className='text-3xl font-bold'>Manage Users</h1>
-        <Button>+ New User</Button>
+        <>
+          <Button onClick={() => setCreateOpen(true)}>+ New User</Button>
+          <CreateUserModal
+            isOpen={createOpen}
+            onClose={() => setCreateOpen(false)}
+            onCreated={() => {
+              setCurrentPage(1);
+              loadUsers();
+            }}
+          />
+        </>
       </div>
 
       {loading ? (
-        <div>Loading...</div>
+        <div className='space-y-3'>
+          <div className='bg-white dark:bg-[#1C1C1A] rounded-lg shadow border border-gray-200 dark:border-[#3E3E3A] overflow-hidden p-4'>
+            <div className='grid grid-cols-4 gap-4'>
+              <Skeleton className='h-6 col-span-1' />
+              <Skeleton className='h-6 col-span-1' />
+              <Skeleton className='h-6 col-span-1' />
+              <Skeleton className='h-6 col-span-1' />
+            </div>
+            <div className='mt-4 space-y-3'>
+              <Skeleton className='h-8' />
+              <Skeleton className='h-8' />
+              <Skeleton className='h-8' />
+            </div>
+          </div>
+          <div className='flex justify-end'>
+            <Skeleton className='h-8 w-32 rounded' />
+          </div>
+        </div>
       ) : (
         <>
           <div className='bg-white dark:bg-[#1C1C1A] rounded-lg shadow border border-gray-200 dark:border-[#3E3E3A] overflow-hidden'>

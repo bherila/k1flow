@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
 import { fetchWrapper } from '@/fetchWrapper';
 import { DeleteUserDialog } from '@/components/user-management/DeleteUserDialog';
+import UserFormFields from '@/components/user-management/UserFormFields';
 
 type User = {
   id: number;
@@ -110,7 +109,41 @@ function EditUser({ userId }: { userId: number }) {
   };
 
   if (loading) {
-    return <div className='max-w-7xl mx-auto'>Loading...</div>;
+    return (
+      <div className='max-w-7xl mx-auto space-y-6'>
+        <div className='flex items-center justify-between mb-8'>
+          <div className='space-y-2'>
+            <Skeleton className='h-8 w-56' />
+            <Skeleton className='h-4 w-40' />
+          </div>
+          <div className='flex gap-2'>
+            <Skeleton className='h-10 w-28 rounded' />
+            <Skeleton className='h-10 w-36 rounded' />
+          </div>
+        </div>
+
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+          <div className='bg-white dark:bg-[#1C1C1A] rounded-lg shadow border border-gray-200 dark:border-[#3E3E3A] p-6'>
+            <Skeleton className='h-6 w-40 mb-4' />
+            <div className='space-y-4'>
+              <Skeleton className='h-10' />
+              <Skeleton className='h-10' />
+              <Skeleton className='h-10' />
+              <Skeleton className='h-10' />
+            </div>
+          </div>
+
+          <div className='bg-white dark:bg-[#1C1C1A] rounded-lg shadow border border-gray-200 dark:border-[#3E3E3A] p-6'>
+            <Skeleton className='h-6 w-36 mb-4' />
+            <div className='space-y-3'>
+              <Skeleton className='h-8' />
+              <Skeleton className='h-8' />
+              <Skeleton className='h-8' />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
@@ -135,83 +168,8 @@ function EditUser({ userId }: { userId: number }) {
           <h2 className='text-xl font-semibold mb-4'>User Details</h2>
           <form onSubmit={handleSubmit}>
             <div className='space-y-4'>
-              <div>
-                <Label htmlFor='name'>Name</Label>
-                <Input
-                  id='name'
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor='email'>Email</Label>
-                <Input
-                  id='email'
-                  type='email'
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor='password'>Password (leave blank to keep current)</Label>
-                <Input
-                  id='password'
-                  type='password'
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder='Leave blank to keep current'
-                />
-              </div>
-
-              <div className='space-y-2'>
-                <div className='flex items-center space-x-2'>
-                  <Checkbox
-                    id='is_admin'
-                    checked={formData.is_admin}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_admin: checked === true })}
-                  />
-                  <Label htmlFor='is_admin' className='font-normal'>
-                    Admin User
-                  </Label>
-                </div>
-
-                <div className='flex items-center space-x-2'>
-                  <Checkbox
-                    id='is_disabled'
-                    checked={formData.is_disabled}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_disabled: checked === true })}
-                  />
-                  <Label htmlFor='is_disabled' className='font-normal'>
-                    Account Disabled
-                  </Label>
-                </div>
-
-                <div className='flex items-center space-x-2'>
-                  <Checkbox
-                    id='force_change_pw'
-                    checked={formData.force_change_pw}
-                    onCheckedChange={(checked) => setFormData({ ...formData, force_change_pw: checked === true })}
-                  />
-                  <Label htmlFor='force_change_pw' className='font-normal'>
-                    Force Password Change
-                  </Label>
-                </div>
-
-                <div className='flex items-center space-x-2'>
-                  <Checkbox
-                    id='email_verified'
-                    checked={formData.email_verified}
-                    onCheckedChange={(checked) => setFormData({ ...formData, email_verified: checked === true })}
-                  />
-                  <Label htmlFor='email_verified' className='font-normal'>
-                    Email Verified
-                  </Label>
-                </div>
-              </div>
+              {/* Reusable form fields */}
+              <UserFormFields formData={formData} setFormData={(next) => setFormData(next)} showAdminOptions={true} />
 
               <Button type='submit' disabled={saving} className='w-full'>
                 {saving ? 'Saving...' : 'Save Changes'}

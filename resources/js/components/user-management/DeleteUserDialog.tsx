@@ -26,7 +26,7 @@ export function DeleteUserDialog({ userId, userName, onSuccess }: DeleteUserDial
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await fetchWrapper.delete(`/api/admin/users/${userId}`);
+      await fetchWrapper.delete(`/api/admin/users/${userId}`, {});
       setOpen(false);
       if (onSuccess) {
         onSuccess();
