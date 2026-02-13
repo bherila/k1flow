@@ -14,6 +14,7 @@ A web application for managing Schedule K-1 forms and tracking flow-through tax 
 - **Loss Carryforwards**: Manage suspended losses by type and character
 - **Ownership Hierarchy**: Model tiered ownership structures for flow-through calculations
 - **PDF Storage**: Upload and store K-1 form PDFs
+- **Streamlined Multi-Year K-1 Editor**: Spreadsheet-like view for editing K-1 data across all years with keyboard navigation (Tab, arrows) and automatic background saves. See [docs/K1_STREAMLINED.md](docs/K1_STREAMLINED.md)
 
 ## Authentication & Security
 

@@ -1,10 +1,11 @@
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { K1Form, OwnershipInterest } from '@/types/k1';
@@ -105,18 +106,32 @@ const K1_FIELDS: { [section: string]: K1FieldMeta[] } = {
   ],
 };
 
+/** Check if a tax year date matches the default (Jan 1 or Dec 31). */
+function isDefaultTaxYearDate(value: string | null | undefined, year: number, isBegin: boolean): boolean {
+  if (!value) return true;
+  const dateStr = typeof value === 'string' ? value.substring(0, 10) : '';
+  const defaultDate = isBegin ? `${year}-01-01` : `${year}-12-31`;
+  return dateStr === defaultDate || dateStr === '';
+}
+
 export default function K1FormStreamlined({ interestId }: Props) {
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
-  const [forms, setForms] = useState<K1Form[]>([]);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [readOnly, setReadOnly] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Store form data in a map keyed by tax_year
+  // Store form data in refs — client state is source of truth.
+  // formsDataRef: year -> field values (mutable, not linked to React state)
   const formsDataRef = useRef<Map<number, Partial<K1Form>>>(new Map());
-  const pendingChangesRef = useRef<Map<number, Set<keyof K1Form>>>(new Map());
-  
+  // formsIdRef: year -> server form id (for PUT vs POST decisions)
+  const formsIdRef = useRef<Map<number, number>>(new Map());
+
   // Track currently focused cell for navigation
   const cellRefs = useRef<Map<string, HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>>(new Map());
+
+  // Save status timeout ref for cleanup
+  const saveStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -125,14 +140,16 @@ export default function K1FormStreamlined({ interestId }: Props) {
         fetchWrapper.get(`/api/ownership-interests/${interestId}/k1s`),
       ]);
       setInterest(interestResult);
-      setForms(formsResult);
-      
-      // Initialize form data ref
+
+      // Initialize refs from loaded data
       const dataMap = new Map<number, Partial<K1Form>>();
+      const idMap = new Map<number, number>();
       formsResult.forEach((form: K1Form) => {
         dataMap.set(form.tax_year, { ...form });
+        idMap.set(form.tax_year, form.id);
       });
       formsDataRef.current = dataMap;
+      formsIdRef.current = idMap;
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -144,16 +161,23 @@ export default function K1FormStreamlined({ interestId }: Props) {
     loadData();
   }, [loadData]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
+    };
+  }, []);
+
   // Calculate years to display
   const years = useMemo(() => {
     if (!interest) return [];
-    
+
     const currentYear = new Date().getFullYear();
     const startYear = interest.inception_basis_year || currentYear;
-    const endYear = interest.effective_to 
-      ? new Date(interest.effective_to).getFullYear() 
+    const endYear = interest.effective_to
+      ? new Date(interest.effective_to).getFullYear()
       : currentYear;
-    
+
     const yearsList: number[] = [];
     for (let y = startYear; y <= endYear; y++) {
       yearsList.push(y);
@@ -161,72 +185,62 @@ export default function K1FormStreamlined({ interestId }: Props) {
     return yearsList;
   }, [interest]);
 
-  // Get or create form data for a year
+  // Get or create form data for a year (reads from ref, no state)
   const getFormForYear = useCallback((year: number): Partial<K1Form> => {
     if (!formsDataRef.current.has(year)) {
-      // Create empty form data
       formsDataRef.current.set(year, { tax_year: year, ownership_interest_id: interestId });
     }
     return formsDataRef.current.get(year)!;
   }, [interestId]);
 
-  // Handle field change
-  const handleChange = useCallback((year: number, field: keyof K1Form, value: any) => {
+  // Save a single field for a year — runs in background, no re-render on success
+  const saveField = useCallback(async (year: number, field: keyof K1Form, value: any) => {
+    if (readOnly) return;
+
+    // Update the ref with the new value
     const formData = getFormForYear(year);
     (formData as any)[field] = value;
     formsDataRef.current.set(year, formData);
-    
-    // Track pending changes
-    if (!pendingChangesRef.current.has(year)) {
-      pendingChangesRef.current.set(year, new Set());
-    }
-    pendingChangesRef.current.get(year)!.add(field);
-  }, [getFormForYear]);
-
-  // Save field for a specific year
-  const saveField = useCallback(async (year: number, field: keyof K1Form) => {
-    const pendingFields = pendingChangesRef.current.get(year);
-    if (!pendingFields || !pendingFields.has(field)) return;
 
     setSaveStatus('saving');
     try {
-      const formData = getFormForYear(year);
-      const existingForm = forms.find(f => f.tax_year === year);
-      
-      const payload = { [field]: formData[field] };
-      
+      const existingId = formsIdRef.current.get(year);
+      const payload = { [field]: value };
+
       let updated: K1Form;
-      if (existingForm) {
+      if (existingId) {
         // Update existing form
-        updated = await fetchWrapper.put(`/api/forms/${existingForm.id}`, payload);
+        updated = await fetchWrapper.put(`/api/forms/${existingId}`, payload);
       } else {
         // Create new form for this year
         updated = await fetchWrapper.post(`/api/ownership-interests/${interestId}/k1s`, {
           tax_year: year,
           ...payload,
         });
-        // Add to forms list
-        setForms(prev => [...prev, updated].sort((a, b) => a.tax_year - b.tax_year));
+        // Track the new form id so future saves use PUT
+        formsIdRef.current.set(year, updated.id);
       }
-      
-      // Update ref with saved data
+
+      // Silently update ref data with server response — no state change, no re-render
       formsDataRef.current.set(year, { ...updated });
-      pendingFields.delete(field);
-      
+
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
+      saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Failed to save:', error);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred while saving.';
+      setErrorMessage(`Failed to save ${field} for ${year}: ${message}`);
       setSaveStatus('error');
+      setReadOnly(true);
     }
-  }, [forms, interestId, getFormForYear]);
+  }, [interestId, getFormForYear, readOnly]);
 
   // Keyboard navigation handlers
   const handleKeyDown = useCallback((
     e: React.KeyboardEvent,
     rowIndex: number,
     colIndex: number,
-    field: keyof K1Form
   ) => {
     const totalRows = Object.values(K1_FIELDS).flat().length;
     const totalCols = years.length;
@@ -237,7 +251,6 @@ export default function K1FormStreamlined({ interestId }: Props) {
     if (e.key === 'Tab') {
       e.preventDefault();
       if (e.shiftKey) {
-        // Shift+Tab - move left
         nextCol = colIndex - 1;
         if (nextCol < 0) {
           nextCol = totalCols - 1;
@@ -245,7 +258,6 @@ export default function K1FormStreamlined({ interestId }: Props) {
           if (nextRow < 0) nextRow = totalRows - 1;
         }
       } else {
-        // Tab - move right
         nextCol = colIndex + 1;
         if (nextCol >= totalCols) {
           nextCol = 0;
@@ -270,10 +282,9 @@ export default function K1FormStreamlined({ interestId }: Props) {
       nextCol = colIndex + 1;
       if (nextCol >= totalCols) nextCol = 0;
     } else {
-      return; // Don't handle other keys
+      return;
     }
 
-    // Find the next cell
     const allFields = Object.values(K1_FIELDS).flat();
     if (nextRow >= 0 && nextRow < allFields.length && nextCol >= 0 && nextCol < totalCols) {
       const nextField = allFields[nextRow];
@@ -319,7 +330,7 @@ export default function K1FormStreamlined({ interestId }: Props) {
 
   const companyName = interest.owned_company?.name || 'Company';
 
-  // Get all fields flattened
+  // Get all fields flattened with section info
   const allFieldsWithSections: Array<{ section: string; field: K1FieldMeta; globalIndex: number }> = [];
   let globalIndex = 0;
   Object.entries(K1_FIELDS).forEach(([section, fields]) => {
@@ -363,19 +374,28 @@ export default function K1FormStreamlined({ interestId }: Props) {
           {saveStatus === 'saved' && (
             <p className="text-sm text-green-600 dark:text-green-400 mt-1">✓ Saved</p>
           )}
-          {saveStatus === 'error' && (
-            <p className="text-sm text-red-600 dark:text-red-400 mt-1">Failed to save</p>
-          )}
         </div>
       </div>
+
+      {/* Error alert — shown when save fails, page becomes readonly */}
+      {readOnly && errorMessage && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Save Error — Editing Disabled</AlertTitle>
+          <AlertDescription>
+            {errorMessage} Refresh the page to restore editing.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Instructions */}
       <Card>
         <CardHeader>
           <CardTitle>Navigation Tips</CardTitle>
           <CardDescription>
-            Use Tab/Shift+Tab to move horizontally between years, Up/Down arrows to move vertically between fields. 
+            Use Tab/Shift+Tab to move horizontally between years, Up/Down arrows to move vertically between fields.
             Click on a year header to view the single-year K-1 form.
+            {readOnly && ' (Editing is currently disabled due to a save error.)'}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -389,18 +409,18 @@ export default function K1FormStreamlined({ interestId }: Props) {
                 <th className="p-3 text-left border-b border-r font-semibold min-w-[300px] bg-muted">
                   Field
                 </th>
-                {years.map((year, colIndex) => {
-                  const existingForm = forms.find(f => f.tax_year === year);
+                {years.map((year) => {
+                  const existingId = formsIdRef.current.get(year);
                   return (
                     <th key={year} className="p-3 text-center border-b font-semibold min-w-[150px] bg-muted">
                       <button
                         onClick={() => {
-                          if (existingForm) {
-                            window.location.href = `/ownership/${interestId}/k1/${existingForm.id}`;
+                          if (existingId) {
+                            window.location.href = `/ownership/${interestId}/k1/${existingId}`;
                           }
                         }}
                         className="hover:underline cursor-pointer text-primary"
-                        title={existingForm ? "Click to view single-year form" : "No form for this year yet"}
+                        title={existingId ? "Click to view single-year form" : "No form for this year yet"}
                       >
                         {year}
                       </button>
@@ -410,46 +430,48 @@ export default function K1FormStreamlined({ interestId }: Props) {
               </tr>
             </thead>
             <tbody>
-              {allFieldsWithSections.map(({ section, field, globalIndex }, rowIndex) => {
+              {allFieldsWithSections.map(({ section, field, globalIndex: gIdx }, rowIndex) => {
                 const prevSection = allFieldsWithSections[rowIndex - 1];
-                const isFirstInSection = rowIndex === 0 || 
+                const isFirstInSection = rowIndex === 0 ||
                   (prevSection && prevSection.section !== section);
-                
+
                 return (
-                  <>
+                  <React.Fragment key={field.key}>
                     {isFirstInSection && (
-                      <tr key={`section-${section}`} className="bg-muted/50">
-                        <td 
-                          colSpan={years.length + 1} 
+                      <tr className="bg-muted/50">
+                        <td
+                          colSpan={years.length + 1}
                           className="p-2 font-semibold text-sm border-b"
                         >
                           {section}
                         </td>
                       </tr>
                     )}
-                    <tr key={`${field.key}`} className="hover:bg-muted/30">
+                    <tr className="hover:bg-muted/30">
                       <td className="p-3 border-b border-r text-sm font-medium">
                         {field.label}
                       </td>
                       {years.map((year, colIndex) => {
                         const formData = getFormForYear(year);
                         const cellKey = `${year}-${field.key}`;
-                        
+                        const initialValue = formData[field.key];
+
                         return (
                           <td key={year} className="p-2 border-b">
                             <K1Cell
                               field={field}
-                              value={formData[field.key]}
-                              onChange={(value) => handleChange(year, field.key, value)}
-                              onBlur={() => saveField(year, field.key)}
-                              onKeyDown={(e) => handleKeyDown(e, globalIndex, colIndex, field.key)}
+                              year={year}
+                              initialValue={initialValue}
+                              readOnly={readOnly}
+                              onSave={(value) => saveField(year, field.key, value)}
+                              onKeyDown={(e) => handleKeyDown(e, gIdx, colIndex)}
                               cellRef={(el) => registerCellRef(cellKey, el)}
                             />
                           </td>
                         );
                       })}
                     </tr>
-                  </>
+                  </React.Fragment>
                 );
               })}
             </tbody>
@@ -460,25 +482,51 @@ export default function K1FormStreamlined({ interestId }: Props) {
   );
 }
 
-// K1Cell component - renders appropriate input based on field type
+// K1Cell component — fully uncontrolled, manages own local state.
+// Saves on blur only. Memoized to prevent re-renders from parent.
 interface K1CellProps {
   field: K1FieldMeta;
-  value: any;
-  onChange: (value: any) => void;
-  onBlur: () => void;
+  year: number;
+  initialValue: any;
+  readOnly: boolean;
+  onSave: (value: any) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   cellRef: (el: HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement | null) => void;
 }
 
-function K1Cell({ field, value, onChange, onBlur, onKeyDown, cellRef }: K1CellProps) {
+const K1Cell = React.memo(function K1Cell({
+  field,
+  year,
+  initialValue,
+  readOnly,
+  onSave,
+  onKeyDown,
+  cellRef,
+}: K1CellProps) {
+  // Local state for the cell value — completely independent of parent
+  const [localValue, setLocalValue] = useState(initialValue);
+  const initialValueRef = useRef(initialValue);
+
+  // Track whether the value has been modified since focus
+  const handleBlur = useCallback(() => {
+    // Only save if value actually changed from the initial value loaded
+    if (localValue !== initialValueRef.current) {
+      initialValueRef.current = localValue;
+      onSave(localValue);
+    }
+  }, [localValue, onSave]);
+
   if (field.type === 'boolean') {
+    const checked = !!localValue;
     return (
       <div className="flex items-center justify-center">
         <Checkbox
-          checked={value ?? false}
-          onCheckedChange={(checked) => {
-            onChange(checked);
-            onBlur();
+          checked={checked}
+          disabled={readOnly}
+          onCheckedChange={(newChecked) => {
+            setLocalValue(newChecked);
+            initialValueRef.current = newChecked;
+            onSave(newChecked);
           }}
           onKeyDown={onKeyDown}
           ref={cellRef as any}
@@ -490,9 +538,10 @@ function K1Cell({ field, value, onChange, onBlur, onKeyDown, cellRef }: K1CellPr
   if (field.type === 'textarea') {
     return (
       <Textarea
-        value={(value as string) ?? ''}
-        onChange={(e) => onChange(e.target.value || null)}
-        onBlur={onBlur}
+        value={(localValue as string) ?? ''}
+        readOnly={readOnly}
+        onChange={(e) => setLocalValue(e.target.value || null)}
+        onBlur={handleBlur}
         onKeyDown={onKeyDown}
         ref={cellRef as any}
         className="min-h-[60px] text-sm"
@@ -501,22 +550,42 @@ function K1Cell({ field, value, onChange, onBlur, onKeyDown, cellRef }: K1CellPr
   }
 
   // text, number, money, percent, date
-  const inputType = field.type === 'date' ? 'date' : 
-                    (field.type === 'money' || field.type === 'number' || field.type === 'percent') ? 'number' : 
+  const inputType = field.type === 'date' ? 'date' :
+                    (field.type === 'money' || field.type === 'number' || field.type === 'percent') ? 'number' :
                     'text';
-  const step = (field.type === 'money' || field.type === 'number') ? '0.01' : 
+  const step = (field.type === 'money' || field.type === 'number') ? '0.01' :
                field.type === 'percent' ? '0.0001' : undefined;
+
+  // Tax year date optimization: show placeholder for default dates
+  let placeholder: string | undefined;
+  if (field.key === 'partnership_tax_year_begin') {
+    placeholder = `${year}-01-01`;
+  } else if (field.key === 'partnership_tax_year_end') {
+    placeholder = `${year}-12-31`;
+  }
+
+  // For date fields, normalize value for the input
+  const displayValue = field.type === 'date'
+    ? ((localValue as string)?.substring(0, 10) ?? '')
+    : ((localValue as string | number) ?? '');
+
+  // For tax year dates, hide value if it matches the default
+  const effectiveValue = (field.key === 'partnership_tax_year_begin' || field.key === 'partnership_tax_year_end')
+    ? (isDefaultTaxYearDate(localValue as string, year, field.key === 'partnership_tax_year_begin') ? '' : displayValue)
+    : displayValue;
 
   return (
     <Input
       type={inputType}
       step={step}
-      value={(value as string | number) ?? ''}
-      onChange={(e) => onChange(e.target.value || null)}
-      onBlur={onBlur}
+      value={effectiveValue}
+      readOnly={readOnly}
+      placeholder={placeholder}
+      onChange={(e) => setLocalValue(e.target.value || null)}
+      onBlur={handleBlur}
       onKeyDown={onKeyDown}
       ref={cellRef as any}
       className="text-sm font-mono"
     />
   );
-}
+});
