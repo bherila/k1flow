@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, FileUp, Loader2,Save } from 'lucide-react';
 import type { ChangeEvent } from 'react';
 import { useCallback,useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +24,6 @@ export default function K1FormDetail({ interestId, taxYear }: Props) {
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   
   // Use refs for form data to avoid re-rendering on every keystroke
   const formDataRef = useRef<Partial<K1Form>>({});
@@ -59,7 +59,7 @@ export default function K1FormDetail({ interestId, taxYear }: Props) {
   const saveField = useCallback(async (field: keyof K1Form) => {
     if (!pendingChangesRef.current.has(field)) return;
     
-    setSaveStatus('saving');
+    const toastId = toast.loading(`Saving ${field}...`);
     setSaving(true);
     try {
       const payload = { tax_year: taxYear, [field]: formDataRef.current[field] };
@@ -67,11 +67,11 @@ export default function K1FormDetail({ interestId, taxYear }: Props) {
       // Only update the ref, not the state, to prevent re-render and focus loss
       formDataRef.current = { ...updated };
       pendingChangesRef.current.delete(field);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      toast.success(`Saved ${field}`, { id: toastId });
     } catch (error) {
       console.error('Failed to save:', error);
-      setSaveStatus('error');
+      const message = error instanceof Error ? error.message : 'An unknown error occurred while saving.';
+      toast.error(`Failed to save ${field}: ${message}`, { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -86,7 +86,7 @@ export default function K1FormDetail({ interestId, taxYear }: Props) {
   // Full save for manual trigger
   const handleSave = async () => {
     setSaving(true);
-    setSaveStatus('saving');
+    const toastId = toast.loading('Saving K-1 form...');
     try {
       const updated = await fetchWrapper.post(`/api/ownership-interests/${interestId}/k1s`, {
         ...formDataRef.current,
@@ -95,11 +95,11 @@ export default function K1FormDetail({ interestId, taxYear }: Props) {
       setForm(updated);
       formDataRef.current = { ...updated };
       pendingChangesRef.current.clear();
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      toast.success('K-1 form saved successfully', { id: toastId });
     } catch (error) {
       console.error('Failed to save:', error);
-      setSaveStatus('error');
+      const message = error instanceof Error ? error.message : 'An unknown error occurred while saving.';
+      toast.error(`Failed to save: ${message}`, { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -201,18 +201,6 @@ export default function K1FormDetail({ interestId, taxYear }: Props) {
           <p className="text-muted-foreground mt-1">
             Partner's Share of Income, Deductions, Credits, etc.
           </p>
-          {/* Auto-save status indicator */}
-          {saveStatus === 'saving' && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-              <Loader2 className="h-3 w-3 animate-spin" /> Saving...
-            </p>
-          )}
-          {saveStatus === 'saved' && (
-            <p className="text-sm text-green-600 dark:text-green-400 mt-1">✓ Saved</p>
-          )}
-          {saveStatus === 'error' && (
-            <p className="text-sm text-red-600 dark:text-red-400 mt-1">Failed to save</p>
-          )}
         </div>
         <div className="flex gap-2">
           <Button 
