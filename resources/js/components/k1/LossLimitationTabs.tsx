@@ -32,10 +32,6 @@ export function LossLimitationTabs({ interestId, year, activeTab, inceptionYear 
     }
   };
 
-  const handleTabChange = (newTab: string) => {
-    window.location.href = getUrl(newTab, year);
-  };
-
   const canGoBack = year > effectiveInceptionYear;
   const canGoForward = year < currentYear;
 
@@ -45,10 +41,12 @@ export function LossLimitationTabs({ interestId, year, activeTab, inceptionYear 
         <Button 
           variant="ghost" 
           className="pl-0 gap-2 text-muted-foreground hover:text-foreground" 
-          onClick={() => window.location.href = `/ownership/${interestId}`}
+          asChild
         >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Summary
+          <a href={`/ownership/${interestId}`}>
+            <ChevronLeft className="h-4 w-4" />
+            Back to Summary
+          </a>
         </Button>
 
         <div className="flex items-center gap-2">
@@ -57,10 +55,19 @@ export function LossLimitationTabs({ interestId, year, activeTab, inceptionYear 
             size="sm"
             className="gap-1"
             disabled={!canGoBack}
-            onClick={() => window.location.href = getUrl(activeTab, year - 1)}
+            asChild={canGoBack}
           >
-            <ArrowLeft className="h-4 w-4" />
-            {year - 1}
+            {canGoBack ? (
+              <a href={getUrl(activeTab, year - 1)}>
+                <ArrowLeft className="h-4 w-4" />
+                {year - 1}
+              </a>
+            ) : (
+              <span>
+                <ArrowLeft className="h-4 w-4" />
+                {year - 1}
+              </span>
+            )}
           </Button>
           
           <div className="px-4 py-1.5 bg-muted rounded-md text-sm font-bold border shadow-sm">
@@ -72,21 +79,40 @@ export function LossLimitationTabs({ interestId, year, activeTab, inceptionYear 
             size="sm"
             className="gap-1"
             disabled={!canGoForward}
-            onClick={() => window.location.href = getUrl(activeTab, year + 1)}
+            asChild={canGoForward}
           >
-            {year + 1}
-            <ArrowRight className="h-4 w-4" />
+            {canGoForward ? (
+              <a href={getUrl(activeTab, year + 1)}>
+                {year + 1}
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            ) : (
+              <span>
+                {year + 1}
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            )}
           </Button>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <Tabs value={activeTab} className="w-full">
         <TabsList className="grid grid-cols-5 w-full h-10">
-          <TabsTrigger value="basis" className="text-xs sm:text-sm">Basis Adjustments</TabsTrigger>
-          <TabsTrigger value="at-risk" className="text-xs sm:text-sm">At-Risk</TabsTrigger>
-          <TabsTrigger value="passive-activity-loss" className="text-xs sm:text-sm">Passive Activity</TabsTrigger>
-          <TabsTrigger value="excess-business-loss" className="text-xs sm:text-sm">Excess Business</TabsTrigger>
-          <TabsTrigger value="net-operating-loss" className="text-xs sm:text-sm">NOL</TabsTrigger>
+          <TabsTrigger value="basis" asChild className="text-xs sm:text-sm">
+            <a href={getUrl('basis', year)}>Basis Adjustments</a>
+          </TabsTrigger>
+          <TabsTrigger value="at-risk" asChild className="text-xs sm:text-sm">
+            <a href={getUrl('at-risk', year)}>At-Risk</a>
+          </TabsTrigger>
+          <TabsTrigger value="passive-activity-loss" asChild className="text-xs sm:text-sm">
+            <a href={getUrl('passive-activity-loss', year)}>Passive Activity</a>
+          </TabsTrigger>
+          <TabsTrigger value="excess-business-loss" asChild className="text-xs sm:text-sm">
+            <a href={getUrl('excess-business-loss', year)}>Excess Business</a>
+          </TabsTrigger>
+          <TabsTrigger value="net-operating-loss" asChild className="text-xs sm:text-sm">
+            <a href={getUrl('net-operating-loss', year)}>NOL</a>
+          </TabsTrigger>
         </TabsList>
       </Tabs>
     </div>
