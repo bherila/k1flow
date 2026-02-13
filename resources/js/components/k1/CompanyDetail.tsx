@@ -203,36 +203,75 @@ export default function CompanyDetail({ companyId }: Props) {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6 py-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-56" />
-            <Skeleton className="h-4 w-40" />
-          </div>
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-28 rounded" />
-            <Skeleton className="h-10 w-36 rounded" />
+      <div className="space-y-6">
+        {/* Breadcrumb Skeleton */}
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-20" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground/20" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+
+        {/* Header Skeleton */}
+        <div className="flex items-start justify-between">
+          <Skeleton className="h-9 w-64" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-32" />
+            <Skeleton className="h-9 w-40" />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-[#1C1C1A] rounded-lg shadow border border-gray-200 dark:border-[#3E3E3A] p-6">
-            <Skeleton className="h-6 w-40 mb-4" />
-            <div className="space-y-4">
-              <Skeleton className="h-10" />
-              <Skeleton className="h-10" />
-              <Skeleton className="h-10" />
-            </div>
-          </div>
+        {/* Details Skeleton */}
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-24" />
+        </div>
 
-          <div className="bg-white dark:bg-[#1C1C1A] rounded-lg shadow border border-gray-200 dark:border-[#3E3E3A] p-6">
-            <Skeleton className="h-6 w-36 mb-4" />
-            <div className="space-y-3">
-              <Skeleton className="h-8" />
-              <Skeleton className="h-8" />
-              <Skeleton className="h-8" />
-            </div>
-          </div>
+        {/* Tabs Skeleton */}
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-[300px]" />
+          
+          <Card>
+            <CardContent className="p-0">
+              <div className="border-b p-4">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-4 w-1/6 ml-auto" />
+                  <Skeleton className="h-4 w-1/6" />
+                  <Skeleton className="h-4 w-1/6" />
+                  <Skeleton className="h-4 w-1/6" />
+                </div>
+              </div>
+              <div className="space-y-0">
+                {/* Group Header */}
+                <div className="bg-muted/50 p-2">
+                  <Skeleton className="h-5 w-32" />
+                </div>
+                {/* Data Rows */}
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="border-b p-4 flex items-center gap-4">
+                    <Skeleton className="h-5 w-1/3" />
+                    <Skeleton className="h-5 w-1/12 ml-auto" />
+                    <Skeleton className="h-5 w-1/6" />
+                    <Skeleton className="h-5 w-1/6" />
+                    <Skeleton className="h-5 w-1/4" />
+                  </div>
+                ))}
+                {/* Group Header 2 */}
+                <div className="bg-muted/50 p-2 border-t">
+                  <Skeleton className="h-5 w-32" />
+                </div>
+                {[1, 2].map((i) => (
+                  <div key={i} className="border-b last:border-0 p-4 flex items-center gap-4">
+                    <Skeleton className="h-5 w-1/3" />
+                    <Skeleton className="h-5 w-1/12 ml-auto" />
+                    <Skeleton className="h-5 w-1/6" />
+                    <Skeleton className="h-5 w-1/6" />
+                    <Skeleton className="h-5 w-1/4" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
