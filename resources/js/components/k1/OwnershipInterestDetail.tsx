@@ -10,6 +10,7 @@ import type { K1Company,OwnershipInterest } from '@/types/k1';
 
 import BasisWalk from './BasisWalk';
 import InceptionBasisModal from './InceptionBasisModal';
+import InterestNavigation from './InterestNavigation';
 
 interface Props {
   interestId: number;
@@ -117,6 +118,9 @@ export default function OwnershipInterestDetail({ interestId }: Props) {
           {saveStatus === 'error' && (
             <p className="text-sm text-red-600 dark:text-red-400 mt-1">Failed to save</p>
           )}
+        </div>
+        <div className="flex gap-2">
+          <InterestNavigation interestId={interestId} activeView="summary" />
         </div>
       </div>
 

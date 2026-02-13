@@ -23,6 +23,7 @@ import type {
   OwnershipInterest, 
 } from '@/types/k1';
 
+import InterestNavigation from './InterestNavigation';
 import { LossLimitationTabs } from './LossLimitationTabs';
 
 const INCREASE_LABELS: Record<string, string> = {
@@ -211,20 +212,7 @@ export default function OwnershipBasisDetail({ interestId, year }: Props) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => window.location.href = `/ownership/${interestId}/k1/${year}`}
-          >
-            Single-Year K-1
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => window.location.href = `/ownership/${interestId}/k1-streamlined`}
-          >
-            Multi-Year View
-          </Button>
+          <InterestNavigation interestId={interestId} year={year} activeView="basis-adjustments" />
         </div>
       </div>
 

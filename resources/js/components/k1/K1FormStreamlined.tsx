@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { fetchWrapper } from '@/fetchWrapper';
 import type { K1Form, OwnershipInterest } from '@/types/k1';
 
+import InterestNavigation from './InterestNavigation';
+
 interface Props {
   interestId: number;
 }
@@ -328,13 +330,7 @@ export default function K1FormStreamlined({ interestId }: Props) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => window.location.href = `/ownership/${interestId}`}
-          >
-            Basis Tracker
-          </Button>
+          <InterestNavigation interestId={interestId} activeView="k1-multi" />
         </div>
       </div>
 
