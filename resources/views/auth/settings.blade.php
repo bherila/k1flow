@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'User Settings — K1 Flow')
+
 @section('content')
 <div id="user-settings-root" 
     data-user="{{ json_encode($user) }}" 

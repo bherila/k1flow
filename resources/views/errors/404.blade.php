@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Not Found — K1 Flow')
+
 @section('content')
 <div class="flex items-center justify-center min-h-[70vh]">
     <div class="text-center">

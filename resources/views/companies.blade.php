@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Companies — K1 Flow')
+
 @section('content')
   <div id="companies"></div>
 @endsection

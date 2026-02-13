@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Signed Out — K1 Flow')
+
 @section('content')
 <div class="max-w-md mx-auto mt-8 p-6 bg-white dark:bg-[#1C1C1A] rounded-lg shadow">
     <h2 class="text-2xl font-bold mb-4">Signed Out</h2>

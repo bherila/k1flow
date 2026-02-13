@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Reset password — K1 Flow')
+
 @section('content')
 <div id="reset-password-root" 
     data-token="{{ $token }}" 

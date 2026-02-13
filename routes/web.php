@@ -58,105 +58,102 @@ Route::middleware('auth')->get('/companies', function () {
 
 // Company detail view with K-1 forms and ownership interests
 Route::get('/company/{id}', function ($id) {
-    return view('company', ['id' => $id]);
+    $company = \App\Models\K1\K1Company::findOrFail($id);
+    return view('company', ['id' => $id, 'companyName' => $company->name]);
 });
 
 // K-1 Form detail/edit view
 Route::get('/ownership/{interestId}/k1/{formId}', function ($interestId, $formId) {
-    return view('k1-form', ['interestId' => $interestId, 'formId' => $formId]);
+    $form = \App\Models\K1\K1Form::with('ownershipInterest.ownedCompany')->findOrFail($formId);
+    $companyName = $form->ownershipInterest && $form->ownershipInterest->ownedCompany ? $form->ownershipInterest->ownedCompany->name : null;
+    $formYear = $form->tax_year ?? null;
+    return view('k1-form', ['interestId' => $interestId, 'formId' => $formId, 'companyName' => $companyName, 'formYear' => $formYear]);
 });
 
 // K-1 Streamlined multi-year view
 Route::get('/ownership/{interestId}/k1-streamlined', function ($interestId) {
-    return view('k1-form-streamlined', ['interestId' => $interestId]);
+    $interest = \App\Models\K1\OwnershipInterest::with('ownedCompany')->findOrFail($interestId);
+    $companyName = $interest->ownedCompany?->name ?? null;
+    return view('k1-form-streamlined', ['interestId' => $interestId, 'companyName' => $companyName]);
 });
 
 // Ownership Interest detail view (includes outside basis and loss limitations)
-
 Route::get('/ownership/{interestId}', function ($interestId) {
+    $interest = \App\Models\K1\OwnershipInterest::with(['ownedCompany','ownerCompany'])->findOrFail($interestId);
+    $ownedCompanyName = $interest->ownedCompany?->name ?? null;
+    $ownerCompanyName = $interest->ownerCompany?->name ?? null;
 
-    return view('ownership-interest', ['interestId' => $interestId]);
-
+    return view('ownership-interest', ['interestId' => $interestId, 'ownedCompanyName' => $ownedCompanyName, 'ownerCompanyName' => $ownerCompanyName]);
 });
 
 
 
 // Ownership Basis Adjustments (Merged Increases/Decreases)
-
 Route::get('/ownership/{interestId}/basis/{year}/adjustments', function ($interestId, $year) {
+    $interest = \App\Models\K1\OwnershipInterest::with('ownedCompany')->findOrFail($interestId);
+    $ownedCompanyName = $interest->ownedCompany?->name ?? null;
 
     return view('ownership-basis-detail', [
-
         'interestId' => $interestId,
-
         'year' => $year,
-
+        'ownedCompanyName' => $ownedCompanyName,
     ]);
-
 });
 
 
 
 Route::get('/ownership/{interestId}/at-risk/{year}', function ($interestId, $year) {
+    $interest = \App\Models\K1\OwnershipInterest::with('ownedCompany')->findOrFail($interestId);
+    $ownedCompanyName = $interest->ownedCompany?->name ?? null;
 
     return view('loss-limitation-detail', [
-
         'interestId' => $interestId,
-
         'year' => $year,
-
-        'type' => 'at-risk'
-
+        'type' => 'at-risk',
+        'ownedCompanyName' => $ownedCompanyName,
     ]);
-
 });
 
 
 
 Route::get('/ownership/{interestId}/passive-activity-loss/{year}', function ($interestId, $year) {
+    $interest = \App\Models\K1\OwnershipInterest::with('ownedCompany')->findOrFail($interestId);
+    $ownedCompanyName = $interest->ownedCompany?->name ?? null;
 
     return view('loss-limitation-detail', [
-
         'interestId' => $interestId,
-
         'year' => $year,
-
-        'type' => 'passive-activity'
-
+        'type' => 'passive-activity',
+        'ownedCompanyName' => $ownedCompanyName,
     ]);
-
 });
 
 
 
 Route::get('/ownership/{interestId}/excess-business-loss/{year}', function ($interestId, $year) {
+    $interest = \App\Models\K1\OwnershipInterest::with('ownedCompany')->findOrFail($interestId);
+    $ownedCompanyName = $interest->ownedCompany?->name ?? null;
 
     return view('loss-limitation-detail', [
-
         'interestId' => $interestId,
-
         'year' => $year,
-
-        'type' => 'excess-business-loss'
-
+        'type' => 'excess-business-loss',
+        'ownedCompanyName' => $ownedCompanyName,
     ]);
-
 });
 
 
 
 Route::get('/ownership/{interestId}/net-operating-loss/{year}', function ($interestId, $year) {
+    $interest = \App\Models\K1\OwnershipInterest::with('ownedCompany')->findOrFail($interestId);
+    $ownedCompanyName = $interest->ownedCompany?->name ?? null;
 
     return view('loss-limitation-detail', [
-
         'interestId' => $interestId,
-
         'year' => $year,
-
-        'type' => 'net-operating-loss'
-
+        'type' => 'net-operating-loss',
+        'ownedCompanyName' => $ownedCompanyName,
     ]);
-
 });
 
 
