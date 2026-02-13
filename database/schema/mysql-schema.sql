@@ -71,9 +71,10 @@ CREATE TABLE `k1_companies` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `k1_companies_owner_user_id_foreign` (`owner_user_id`),
-  CONSTRAINT `k1_companies_owner_user_id_foreign` FOREIGN KEY (`owner_user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+  CONSTRAINT `k1_companies_owner_user_id_foreign` FOREIGN KEY (`owner_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `k1_f461_worksheets`;
@@ -95,6 +96,7 @@ CREATE TABLE `k1_f461_worksheets` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `f461_interest_year_unique` (`ownership_interest_id`,`tax_year`),
   CONSTRAINT `k1_f461_worksheets_ownership_interest_id_foreign` FOREIGN KEY (`ownership_interest_id`) REFERENCES `ownership_interests` (`id`) ON DELETE CASCADE
@@ -178,6 +180,7 @@ CREATE TABLE `k1_forms` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `k1_forms_ownership_interest_id_tax_year_unique` (`ownership_interest_id`,`tax_year`),
   CONSTRAINT `k1_forms_ownership_interest_id_foreign` FOREIGN KEY (`ownership_interest_id`) REFERENCES `ownership_interests` (`id`) ON DELETE CASCADE
@@ -196,6 +199,7 @@ CREATE TABLE `k1_income_sources` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `k1_income_sources_k1_form_id_foreign` (`k1_form_id`),
   CONSTRAINT `k1_income_sources_k1_form_id_foreign` FOREIGN KEY (`k1_form_id`) REFERENCES `k1_forms` (`id`) ON DELETE CASCADE
@@ -216,6 +220,7 @@ CREATE TABLE `loss_carryforwards` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `loss_carryforwards_ownership_interest_id_foreign` (`ownership_interest_id`),
   CONSTRAINT `loss_carryforwards_ownership_interest_id_foreign` FOREIGN KEY (`ownership_interest_id`) REFERENCES `ownership_interests` (`id`) ON DELETE CASCADE
@@ -242,6 +247,7 @@ CREATE TABLE `loss_limitations` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_loss_limit_per_year` (`ownership_interest_id`,`tax_year`),
   CONSTRAINT `loss_limitations_ownership_interest_id_foreign` FOREIGN KEY (`ownership_interest_id`) REFERENCES `ownership_interests` (`id`) ON DELETE CASCADE
@@ -273,6 +279,7 @@ CREATE TABLE `ob_adjustments` (
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `ob_adjustments_outside_basis_id_foreign` (`outside_basis_id`),
   CONSTRAINT `ob_adjustments_outside_basis_id_foreign` FOREIGN KEY (`outside_basis_id`) REFERENCES `outside_basis` (`id`) ON DELETE CASCADE
@@ -290,6 +297,7 @@ CREATE TABLE `outside_basis` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_ob_per_year` (`ownership_interest_id`,`tax_year`),
   CONSTRAINT `outside_basis_ownership_interest_id_foreign` FOREIGN KEY (`ownership_interest_id`) REFERENCES `ownership_interests` (`id`) ON DELETE CASCADE
@@ -322,6 +330,7 @@ CREATE TABLE `ownership_interests` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_ownership_interest` (`owner_company_id`,`owned_company_id`,`effective_from`),
   KEY `ownership_interests_owned_company_id_foreign` (`owned_company_id`),
@@ -359,7 +368,7 @@ DROP TABLE IF EXISTS `user_audit_logs`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_audit_logs` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) unsigned NOT NULL,
+  `user_id` bigint(20) unsigned DEFAULT NULL,
   `acting_user_id` bigint(20) unsigned DEFAULT NULL,
   `event_name` enum('create','update','sign-in','reset-password','reset-password-request','reset-password-complete','email-change-request','email-change-complete','email-verify','sign-out','admin-lock','admin-unlock') NOT NULL,
   `is_successful` tinyint(1) NOT NULL DEFAULT 1,
@@ -368,10 +377,10 @@ CREATE TABLE `user_audit_logs` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `user_audit_logs_user_id_foreign` (`user_id`),
   KEY `user_audit_logs_acting_user_id_foreign` (`acting_user_id`),
+  KEY `user_audit_logs_user_id_foreign` (`user_id`),
   CONSTRAINT `user_audit_logs_acting_user_id_foreign` FOREIGN KEY (`acting_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `user_audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  CONSTRAINT `user_audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `users`;
@@ -425,3 +434,7 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (16,'2026_01_14_064
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (17,'2026_01_21_174128_restructure_k1_forms_table',3);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (21,'2026_02_12_012222_create_users_table',4);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (23,'2026_02_12_012223_create_user_audit_logs_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (24,'2026_02_12_160000_make_user_id_nullable_in_user_audit_logs',6);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (25,'2026_02_12_021227_add_owner_user_id_to_k1_companies_table',7);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (26,'2026_02_12_021227_create_company_user_table',7);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (27,'2026_02_12_090258_add_soft_deletes_to_k1_tables',8);
