@@ -524,9 +524,12 @@ export default function CompanyDetail({ companyId }: Props) {
                       <TableRow key={interest.id}>
                         <TableCell>
                           {interest.owner_company ? (
-                            <span className="font-medium">
+                            <a 
+                              href={`/company/${interest.owner_company.id}`}
+                              className="font-medium hover:underline text-primary"
+                            >
                               {interest.owner_company.name}
-                            </span>
+                            </a>
                           ) : (
                             <span className="text-muted-foreground">Individual Owner</span>
                           )}
@@ -543,8 +546,10 @@ export default function CompanyDetail({ companyId }: Props) {
                               variant="ghost"
                               size="sm"
                               onClick={() => window.location.href = `/company/${interest.owner_company!.id}`}
+                              className="flex items-center gap-1"
                             >
                               View
+                              <ChevronRight className="h-4 w-4" />
                             </Button>
                           )}
                         </TableCell>
