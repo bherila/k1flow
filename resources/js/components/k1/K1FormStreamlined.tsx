@@ -1,5 +1,6 @@
 import { AlertCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -109,9 +110,7 @@ const K1_FIELDS: { [section: string]: K1FieldMeta[] } = {
 export default function K1FormStreamlined({ interestId }: Props) {
   const [interest, setInterest] = useState<OwnershipInterest | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [readOnly, setReadOnly] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Store form data in refs — client state is source of truth.
   // formsDataRef: year -> field values (mutable, not linked to React state)
@@ -121,9 +120,6 @@ export default function K1FormStreamlined({ interestId }: Props) {
 
   // Track currently focused cell for navigation
   const cellRefs = useRef<Map<string, HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>>(new Map());
-
-  // Save status timeout ref for cleanup
-  const saveStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -152,13 +148,6 @@ export default function K1FormStreamlined({ interestId }: Props) {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
-    };
-  }, []);
 
   // Calculate years to display
   const years = useMemo(() => {
@@ -194,7 +183,8 @@ export default function K1FormStreamlined({ interestId }: Props) {
     (formData as any)[field] = value;
     formsDataRef.current.set(year, formData);
 
-    setSaveStatus('saving');
+    const toastId = toast.loading(`Saving ${year}...`);
+
     try {
       const existingId = formsIdRef.current.get(year);
       const payload = { [field]: value };
@@ -216,14 +206,11 @@ export default function K1FormStreamlined({ interestId }: Props) {
       // Silently update ref data with server response — no state change, no re-render
       formsDataRef.current.set(year, { ...updated });
 
-      setSaveStatus('saved');
-      if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
-      saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
+      toast.success(`Saved ${year}`, { id: toastId });
     } catch (error) {
       console.error('Failed to save:', error);
       const message = error instanceof Error ? error.message : 'An unknown error occurred while saving.';
-      setErrorMessage(`Failed to save ${field} for ${year}: ${message}`);
-      setSaveStatus('error');
+      toast.error(`Failed to save ${field} for ${year}: ${message}`, { id: toastId });
       setReadOnly(true);
     }
   }, [interestId, getFormForYear, readOnly]);
@@ -357,25 +344,16 @@ export default function K1FormStreamlined({ interestId }: Props) {
           <p className="text-muted-foreground mt-1">
             {companyName} - All Years
           </p>
-          {/* Auto-save status indicator */}
-          {saveStatus === 'saving' && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-              <Loader2 className="h-3 w-3 animate-spin" /> Saving...
-            </p>
-          )}
-          {saveStatus === 'saved' && (
-            <p className="text-sm text-green-600 dark:text-green-400 mt-1">✓ Saved</p>
-          )}
         </div>
       </div>
 
       {/* Error alert — shown when save fails, page becomes readonly */}
-      {readOnly && errorMessage && (
+      {readOnly && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Save Error — Editing Disabled</AlertTitle>
           <AlertDescription>
-            {errorMessage} Refresh the page to restore editing.
+            A save error occurred. Refresh the page to restore editing.
           </AlertDescription>
         </Alert>
       )}
