@@ -404,9 +404,9 @@ export default function K1FormStreamlined({ interestId }: Props) {
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full border-collapse text-sm">
-            <thead className="sticky top-0 bg-muted z-10">
+            <thead className="sticky top-0 z-30">
               <tr>
-                <th className="p-3 text-left border-b border-r font-semibold min-w-[300px] bg-muted">
+                <th className="p-3 text-left border-b border-r font-semibold min-w-[300px] bg-muted sticky left-0 z-40">
                   Field
                 </th>
                 {years.map((year) => {
@@ -438,17 +438,20 @@ export default function K1FormStreamlined({ interestId }: Props) {
                 return (
                   <React.Fragment key={field.key}>
                     {isFirstInSection && (
-                      <tr className="bg-muted/50">
+                      <tr className="sticky top-[45px] z-20">
                         <td
-                          colSpan={years.length + 1}
-                          className="p-2 font-semibold text-sm border-b"
+                          className="p-2 font-semibold text-sm border-b sticky left-0 bg-secondary text-secondary-foreground z-30"
                         >
                           {section}
                         </td>
+                        <td
+                          colSpan={years.length}
+                          className="p-2 border-b bg-secondary"
+                        />
                       </tr>
                     )}
-                    <tr className="hover:bg-muted/30">
-                      <td className="p-3 border-b border-r text-sm font-medium">
+                    <tr className="hover:bg-muted/30 group">
+                      <td className="p-3 border-b border-r text-sm font-medium sticky left-0 z-10 bg-background group-hover:bg-muted transition-colors">
                         {field.label}
                       </td>
                       {years.map((year, colIndex) => {
